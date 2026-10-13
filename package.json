@@ -1,0 +1,51 @@
+{
+  "name": "hacker-fables-game",
+  "version": "0.1.0",
+  "description": "Hacker Fables - A Vim roguelike.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Sebastian Carlos",
+  "main": "src/main.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sebastiancarlos/hacker-fables-game.git"
+  },
+  "homepage": "https://github.com/sebastiancarlos/hacker-fables-game#readme",
+  "bugs": {
+    "url": "https://github.com/sebastiancarlos/hacker-fables-game/issues"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "start": "node src/main.ts",
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test \"test/**/*.test.ts\"",
+    "test:e2e": "playwright test",
+    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\" \"*.ts\" \"package.json\" \"index.html\" \".github/**/*.yml\"",
+    "format:check": "prettier --check \"src/**/*.ts\" \"test/**/*.ts\" \"*.ts\" \"package.json\" \"index.html\" \".github/**/*.yml\""
+  },
+  "keywords": [
+    "ascii",
+    "game",
+    "roguelike",
+    "terminal",
+    "vim"
+  ],
+  "dependencies": {
+    "@xterm/addon-fit": "^0.11.0",
+    "@xterm/addon-webgl": "^0.19.0",
+    "@xterm/xterm": "^6.0.0",
+    "rot-js": "^2.2.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.1",
+    "@types/node": "^26.6.5",
+    "prettier": "^3.9.10",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.5"
+  }
+}
