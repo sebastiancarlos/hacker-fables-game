@@ -4,9 +4,12 @@
   <img src="docs/logo.png" alt="hacker-fables-game" width="70%">
 </p>
 
+_The game you can't quit playing ;)_
+
 https://github.com/user-attachments/assets/a5244548-b785-4035-a98d-94299f6b0346
 
-_The game you can't quit playing ;)_
+[**Play it online
+here.**](https://sebastiancarlos.github.io/hacker-fables-game/)
 
 ![CI](https://github.com/sebastiancarlos/hacker-fables-game/actions/workflows/ci.yml/badge.svg)
 [![License:
@@ -17,9 +20,6 @@ Hacker Fables is a **terminal and browser roguelike** where **Vim keybindings
 are martial arts** and you wield weapons like the **Modal Shotgun**. Descend
 through Bell Labs, defeat the code-snakes, and destroy the eldritch
 abomination at the bottom.
-
-[**Play it online
-here.**](https://sebastiancarlos.github.io/hacker-fables-game/)
 
 The game runs both in a terminal and in the browser (through `xterm.js`).
 
