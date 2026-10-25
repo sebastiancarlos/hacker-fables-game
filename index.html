@@ -23,9 +23,51 @@
       #terminal {
         display: inline-block;
       }
+
+      .github-corner {
+        position: fixed;
+        top: 0;
+        right: 0;
+        width: 84px;
+        height: 84px;
+        overflow: hidden;
+        z-index: 1;
+      }
+
+      .github-corner span {
+        position: absolute;
+        top: 18px;
+        right: -30px;
+        width: 120px;
+        padding: 4px 0;
+        transform: rotate(45deg);
+        background: #111;
+        border-top: 1px solid #333;
+        border-bottom: 1px solid #333;
+        color: #888;
+        font-size: 11px;
+        line-height: 1;
+        text-align: center;
+        text-decoration: none;
+      }
+
+      .github-corner:hover span,
+      .github-corner:focus-visible span {
+        background: #222;
+        color: #fff;
+      }
     </style>
   </head>
   <body>
+    <a
+      class="github-corner"
+      href="https://github.com/sebastiancarlos/hacker-fables-game"
+      target="_blank"
+      rel="noopener"
+      aria-label="View source on GitHub"
+    >
+      <span>GitHub</span>
+    </a>
     <div id="terminal"></div>
     <script type="module" src="/src/web.ts"></script>
   </body>
