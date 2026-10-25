@@ -4,6 +4,8 @@
   <img src="docs/logo.png" alt="hacker-fables-game" width="70%">
 </p>
 
+https://github.com/user-attachments/assets/a5244548-b785-4035-a98d-94299f6b0346
+
 _The game you can't quit playing ;)_
 
 ![CI](https://github.com/sebastiancarlos/hacker-fables-game/actions/workflows/ci.yml/badge.svg)
