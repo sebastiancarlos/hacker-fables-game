@@ -1,10 +1,10 @@
-# 🥷💻 Hacker Fables
+# 🥷💻 Hacker Fables - A Vim Roguelike
 
 <p align="center">
   <img src="docs/logo.png" alt="hacker-fables-game" width="70%">
 </p>
 
-**A Vim Roguelike.**
+_The game you can't quit playing ;)_
 
 ![CI](https://github.com/sebastiancarlos/hacker-fables-game/actions/workflows/ci.yml/badge.svg)
 [![License:
