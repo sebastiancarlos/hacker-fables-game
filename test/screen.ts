@@ -4,8 +4,17 @@
  * Keeping both beside the tests leaves production with only the real
  * terminal screen, while the emulator still reports what a player sees.
  */
-import { serializeCell, serializeSpans, type Screen } from "../src/screen.ts";
-import { fitSpans, type Cell, type RichText, type Span } from "../src/style.ts";
+import type { Screen } from "../src/ui/screen.ts";
+import {
+  serializeCell,
+  serializeSpans,
+} from "../src/platform/terminal/ansi-screen.ts";
+import {
+  fitSpans,
+  type Cell,
+  type RichText,
+  type Span,
+} from "../src/ui/style.ts";
 
 /**
  * Minimal terminal emulator: cursor positioning, SGR state, text grid.

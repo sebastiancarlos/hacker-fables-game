@@ -173,59 +173,71 @@ No PII or telemetry is collected.
 ```txt
 hacker-fables-game/
 ├── src/
-│   ├── main.ts              # terminal entry point
-│   ├── web.ts               # browser entry point (xterm.js)
-│   ├── game.ts              # game loop, key intake, replay wiring
-│   ├── game-state.ts        # the game state
-│   ├── input.ts             # key input
-│   ├── keymap.ts            # key-binding table
-│   ├── key.ts               # normalized key input into IR
-│   ├── terminal-input.ts    # terminal-centric input decoder
-│   ├── modes.ts             # orchestrates several game "modes"
-│   ├── movement.ts          # movement logic
-│   ├── combat.ts            # melee and ranged combat logic
-│   ├── items.ts             # items definition and logic
-│   ├── inventory.ts         # pickup, equip
-│   ├── monsters.ts          # some enemy info
-│   ├── enemies.ts           # more enemy info
-│   ├── world.ts             # level layout and population
-│   ├── levels.ts            # level arrival handling
-│   ├── vision.ts            # casting sight and memory
-│   ├── rng.ts               # RNG store
-│   ├── geometry.ts          # distances, paths, GUI panels
-│   ├── grid.ts              # IR and logic of some layout-centric tiles
-│   ├── render.ts            # screen painting
-│   ├── screen.ts            # screen interface and ANSI writer
-│   ├── frame-buffer.ts      # frame buffer and diff system
-│   ├── style.ts             # semantic colors and text
-│   ├── theme.ts             # colors and other theme-related values
-│   ├── text.ts              # wrapping, column layout, etc
-│   ├── content.ts           # most of the game text copy
-│   ├── messages.ts          # events for the live message line
-│   ├── events.ts            # simulation actions
-│   ├── commands.ts          # vim commands tally logic
-│   ├── pager.ts             # GUI such as pagers, menus, confirm popups
-│   ├── help.ts              # in-game help and reference
-│   ├── look.ts              # look mode logic
-│   ├── aim.ts               # cursor and visual block logic
-│   ├── title.ts             # title page logic
-│   ├── endgame.ts           # death screen logic
-│   ├── end-keys.ts          # more death screen logic
-│   ├── score.ts             # record and high scores logic
-│   ├── dump.ts              # morgue report generation
-│   ├── recording.ts         # recording serialization
-│   ├── replay.ts            # recording playback
-│   ├── progression.ts       # XP curve, ranks, etc
-│   ├── progress.ts          # more XP curve, ranks, etc
-│   ├── queries.ts           # read-only game state lookup helpers
-│   ├── cli.ts               # CLI flags handling
-│   ├── platform.ts          # terminal IO and file storage
-│   ├── platform-web.ts      # browser storage and xterm adapter
-│   └── index.ts             # shim for tests
-├── test/                    # test suite for terminal and browser
-├── index.html               # Vite page shell
-├── vite.config.ts           # web build config
-├── playwright.config.ts     # Chromium browser test config
+│   ├── main.ts                  # terminal entry point
+│   ├── web.ts                   # browser entry point (xterm.js)
+│   ├── cli.ts                   # CLI flags handling
+│   ├── content.ts               # most of the game text copy
+│   ├── index.ts                 # shim for tests
+│   ├── game/
+│   │   ├── game.ts              # game loop, key intake, replay wiring
+│   │   ├── state.ts             # the game state
+│   │   ├── modes.ts             # orchestrates several game "modes"
+│   │   ├── events.ts            # simulation actions
+│   │   └── movement.ts          # movement logic
+│   ├── world/
+│   │   ├── map.ts               # level layout and population
+│   │   ├── levels.ts            # level arrival handling
+│   │   ├── depth.ts             # depth-related constants and helpers
+│   │   ├── vision.ts            # casting sight and memory
+│   │   ├── rng.ts               # RNG store
+│   │   ├── geometry.ts          # distances, paths, GUI panels
+│   │   ├── grid.ts              # IR and logic of some layout-centric tiles
+│   │   └── queries.ts           # read-only game state lookup helpers
+│   ├── combat/
+│   │   ├── combat.ts            # melee and ranged combat logic
+│   │   ├── monsters.ts          # some enemy info
+│   │   ├── enemies.ts           # more enemy info
+│   │   └── aim.ts               # cursor and visual block logic
+│   ├── player/
+│   │   ├── items.ts             # items definition and logic
+│   │   ├── inventory.ts         # pickup, equip
+│   │   ├── progression.ts       # XP curve, ranks, etc
+│   │   └── progress.ts          # more XP curve, ranks, etc
+│   ├── ui/
+│   │   ├── screen.ts            # screen interface
+│   │   ├── render.ts            # screen painting
+│   │   ├── messages.ts          # events for the live message line
+│   │   ├── commands.ts          # vim commands tally logic
+│   │   ├── frame-buffer.ts      # frame buffer and diff system
+│   │   ├── style.ts             # semantic colors and text
+│   │   ├── theme.ts             # colors and other theme-related values
+│   │   ├── text.ts              # wrapping, column layout, etc
+│   │   └── screens/
+│   │       ├── title.ts         # title page logic
+│   │       ├── help.ts          # in-game help and reference
+│   │       ├── pager.ts         # GUI such as pagers, menus, confirm popups
+│   │       ├── look.ts          # look mode logic
+│   │       ├── endgame.ts       # death screen logic
+│   │       └── end-keys.ts      # more death screen logic
+│   ├── input/
+│   │   ├── input.ts             # key input
+│   │   ├── keymap.ts            # key-binding table
+│   │   └── key.ts               # normalized key input into IR
+│   ├── platform/
+│   │   ├── node.ts              # terminal IO and file storage
+│   │   ├── browser.ts           # browser storage and xterm adapter
+│   │   └── terminal/
+│   │       ├── ansi-screen.ts   # ANSI screen writer
+│   │       └── input.ts         # terminal-centric input decoder
+│   └── records/
+│       ├── score.ts             # record and high scores logic
+│       ├── dump.ts              # morgue report generation
+│       ├── recording.ts         # recording serialization
+│       └── replay.ts            # recording playback
+├── test/                        # test suite for terminal and browser
+├── index.html                   # Vite page shell
+├── vite.config.ts               # web build config
+├── playwright.config.ts         # Chromium browser test config
 ├── tsconfig.json
 ├── package.json
 └── README.md

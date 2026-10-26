@@ -7,8 +7,8 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { Game, MAP_TOP } from "../src/index.ts";
-import { AnsiScreen } from "../src/screen.ts";
-import { FrameBuffer } from "../src/frame-buffer.ts";
+import { AnsiScreen } from "../src/platform/terminal/ansi-screen.ts";
+import { FrameBuffer } from "../src/ui/frame-buffer.ts";
 import { TerminalEmulator, VirtualScreen } from "./screen.ts";
 import {
   KEY_NAME,
@@ -16,8 +16,8 @@ import {
   keyToken,
   makeKey,
   type Key,
-} from "../src/key.ts";
-import { decodeInput } from "../src/terminal-input.ts";
+} from "../src/input/key.ts";
+import { decodeInput } from "../src/platform/terminal/input.ts";
 import {
   createGrid,
   gridAdd,
@@ -25,7 +25,7 @@ import {
   gridHas,
   gridKeys,
   type Grid,
-} from "../src/grid.ts";
+} from "../src/world/grid.ts";
 import {
   hunterStep,
   driveUntil,
@@ -48,8 +48,13 @@ import {
   lookTargets,
   nearestFreeCell,
   panelGeometry,
-} from "../src/geometry.ts";
-import { alignColumns, fitRow, visibleLength, wrapText } from "../src/text.ts";
+} from "../src/world/geometry.ts";
+import {
+  alignColumns,
+  fitRow,
+  visibleLength,
+  wrapText,
+} from "../src/ui/text.ts";
 import {
   BOSS_VERSION,
   bossColor,
@@ -76,8 +81,8 @@ import {
   walrusVersionForDepth,
   WALRUS_MIN_DEPTH,
   woundWord,
-} from "../src/enemies.ts";
-import { BOSS_DEPTH, steps, VISUAL_UNLOCK_LEVEL } from "../src/depth.ts";
+} from "../src/combat/enemies.ts";
+import { BOSS_DEPTH, steps, VISUAL_UNLOCK_LEVEL } from "../src/world/depth.ts";
 import {
   chooseShots,
   groupScripts,
@@ -89,7 +94,7 @@ import {
   shotgunSpec,
   SHOTGUN_DMG,
   shotMessage,
-} from "../src/items.ts";
+} from "../src/player/items.ts";
 import {
   levelFromXp,
   startingKit,
@@ -97,7 +102,7 @@ import {
   XP_PER_KILL,
   xpForClearedLevels,
   xpNext,
-} from "../src/progression.ts";
+} from "../src/player/progression.ts";
 import {
   enemyCells,
   buildLevel,
@@ -110,8 +115,8 @@ import {
   SCRIPT_DROP_DEPTH,
   type Enemy,
   type Level,
-} from "../src/world.ts";
-import { HEIGHT, WIDTH } from "../src/theme.ts";
+} from "../src/world/map.ts";
+import { HEIGHT, WIDTH } from "../src/ui/theme.ts";
 import {
   drawCursor,
   enemyColor,
@@ -120,28 +125,33 @@ import {
   paintElevatorFrame,
   paintStatus,
   cellSpec,
-} from "../src/render.ts";
-import { slideEnemy, enemyTurn, passTurn } from "../src/monsters.ts";
-import { lookStep } from "../src/look.ts";
-import { cellsInRect, fireVisual, repeatFire, visualMove } from "../src/aim.ts";
-import { attack, fireCommand } from "../src/combat.ts";
-import { commandLine } from "../src/commands.ts";
+} from "../src/ui/render.ts";
+import { slideEnemy, enemyTurn, passTurn } from "../src/combat/monsters.ts";
+import { lookStep } from "../src/ui/screens/look.ts";
+import {
+  cellsInRect,
+  fireVisual,
+  repeatFire,
+  visualMove,
+} from "../src/combat/aim.ts";
+import { attack, fireCommand } from "../src/combat/combat.ts";
+import { commandLine } from "../src/ui/commands.ts";
 import {
   blockBounds,
   cursorStep,
   edgeReach,
   elevatorAt,
   selectionCells,
-} from "../src/queries.ts";
-import { ascend, descend, rideElevator } from "../src/movement.ts";
+} from "../src/world/queries.ts";
+import { ascend, descend, rideElevator } from "../src/game/movement.ts";
 import {
   formatLastMessage,
   formatLog,
   formatMessage,
-} from "../src/messages.ts";
-import { awardXp, killEnemy } from "../src/progress.ts";
-import { settle } from "../src/endgame.ts";
-import { createFov } from "../src/vision.ts";
+} from "../src/ui/messages.ts";
+import { awardXp, killEnemy } from "../src/player/progress.ts";
+import { settle } from "../src/ui/screens/endgame.ts";
+import { createFov } from "../src/world/vision.ts";
 import {
   MAX_HP,
   activeMode,
@@ -151,15 +161,15 @@ import {
   type CommandKind,
   type FireAction,
   type GameState,
-} from "../src/game-state.ts";
+} from "../src/game/state.ts";
 import {
   COMMANDS_LINES,
   GAMEPLAY_TOKENS,
   visualKey,
   commandLabel,
   type InputDeps,
-} from "../src/input.ts";
-import { handleKey, presentAfterKey, render } from "../src/modes.ts";
+} from "../src/input/input.ts";
+import { handleKey, presentAfterKey, render } from "../src/game/modes.ts";
 import {
   closeConfirm,
   confirmKey,
@@ -168,8 +178,8 @@ import {
   openPager,
   showHelp,
   closePager,
-} from "../src/pager.ts";
-import { closeInventory, showDetailsFor } from "../src/inventory.ts";
+} from "../src/ui/screens/pager.ts";
+import { closeInventory, showDetailsFor } from "../src/player/inventory.ts";
 import { parseArgs } from "../src/cli.ts";
 import {
   appendScore,
@@ -185,7 +195,7 @@ import {
   latestRecording,
   resolveReplay,
   defaultRecordingDir,
-} from "../src/platform.ts";
+} from "../src/platform/node.ts";
 import {
   STATUS_ROW,
   STYLE_FLOOR_MEM,
@@ -194,8 +204,8 @@ import {
   STYLE_WALL_CORRUPT,
   STYLE_WALL_CORRUPT_RAMP,
   STYLE_WALL_MEM,
-} from "../src/theme.ts";
-import { linkify, plain, type Cell } from "../src/style.ts";
+} from "../src/ui/theme.ts";
+import { linkify, plain, type Cell } from "../src/ui/style.ts";
 import {
   commandKinds,
   endScreenLines,
@@ -208,8 +218,8 @@ import {
   scoreOf,
   scoreRank,
   WIN_BONUS,
-} from "../src/score.ts";
-import { dumpFileName, dumpText } from "../src/dump.ts";
+} from "../src/records/score.ts";
+import { dumpFileName, dumpText } from "../src/records/dump.ts";
 import {
   RECORDING_VERSION,
   recordingFileName,
@@ -218,8 +228,8 @@ import {
   parseRecording,
   type Recording,
   type RecordingEntry,
-} from "../src/recording.ts";
-import { scoreRows, titleLines } from "../src/title.ts";
+} from "../src/records/recording.ts";
+import { scoreRows, titleLines } from "../src/ui/screens/title.ts";
 import {
   DEATH_LINE,
   ELEVATOR_BROKEN,

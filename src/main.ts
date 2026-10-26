@@ -8,7 +8,7 @@
  * A run can be started fresh (scored, with a splash) or replayed from a
  * recording. The "View recording" picker boots a second, unscored game in place.
  */
-import { AnsiScreen } from "./screen.ts";
+import { AnsiScreen } from "./platform/terminal/ansi-screen.ts";
 import {
   appendScore,
   createTerminal,
@@ -18,11 +18,11 @@ import {
   resolveReplay,
   writeDump,
   writeRecording,
-} from "./platform.ts";
+} from "./platform/node.ts";
 import { parseArgs } from "./cli.ts";
-import { Game } from "./game.ts";
-import type { Recording } from "./recording.ts";
-import { decodeInput } from "./terminal-input.ts";
+import { Game } from "./game/game.ts";
+import type { Recording } from "./records/recording.ts";
+import { decodeInput } from "./platform/terminal/input.ts";
 
 /** Parsed command-line options for this launch. */
 const opts = parseArgs(process.argv);

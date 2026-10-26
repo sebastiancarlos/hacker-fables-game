@@ -7,7 +7,7 @@
 import { Terminal } from "@xterm/xterm";
 import { WebglAddon } from "@xterm/addon-webgl";
 import "@xterm/xterm/css/xterm.css";
-import type { Recording } from "./recording.ts";
+import type { Recording } from "./records/recording.ts";
 
 declare global {
   interface Window {
@@ -16,10 +16,10 @@ declare global {
     };
   }
 }
-import { AnsiScreen } from "./screen.ts";
-import { Game } from "./game.ts";
-import { decodeInput } from "./terminal-input.ts";
-import { SCREEN_ROWS, WIDTH } from "./theme.ts";
+import { AnsiScreen } from "./platform/terminal/ansi-screen.ts";
+import { Game } from "./game/game.ts";
+import { decodeInput } from "./platform/terminal/input.ts";
+import { SCREEN_ROWS, WIDTH } from "./ui/theme.ts";
 import {
   appendScore,
   createWebTerminal,
@@ -28,7 +28,7 @@ import {
   recordingEntries,
   resolveReplay,
   saveRecording,
-} from "./platform-web.ts";
+} from "./platform/browser.ts";
 
 /** Query parameters accepted by the web build. */
 const params = new URLSearchParams(window.location.search);

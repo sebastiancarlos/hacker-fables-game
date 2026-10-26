@@ -5,7 +5,7 @@
  * passes `process.argv` here, then launches the game from the result.
  */
 import { parseArgs as parseNodeArgs } from "node:util";
-import { BOSS_DEPTH } from "./depth.ts";
+import { BOSS_DEPTH } from "./world/depth.ts";
 
 /** Parsed command-line options for one process launch. */
 export interface RunOptions {

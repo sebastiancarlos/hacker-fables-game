@@ -8,7 +8,7 @@
  * "../src/index.ts"` keeps working.
  */
 /** The game's public headless surface. */
-export { Game, type GameDeps } from "./game.ts";
+export { Game, type GameDeps } from "./game/game.ts";
 export {
   WIDTH,
   HEIGHT,
@@ -16,4 +16,4 @@ export {
   STATUS_ROW,
   DUNGEON_ROW,
   COMMAND_ROW,
-} from "./theme.ts";
+} from "./ui/theme.ts";

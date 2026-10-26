@@ -1,5 +1,5 @@
-import type { RichText } from "./style.ts";
-import { BOSS_DEPTH } from "./depth.ts";
+import type { RichText } from "./ui/style.ts";
+import { BOSS_DEPTH } from "./world/depth.ts";
 /**
  * Content: every player-facing word.
  *

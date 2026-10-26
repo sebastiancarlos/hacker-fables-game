@@ -19,8 +19,8 @@ import {
   gridKeys,
   gridSet,
   inGrid,
-} from "../src/grid.ts";
-import { HEIGHT, WIDTH } from "../src/theme.ts";
+} from "../src/world/grid.ts";
+import { HEIGHT, WIDTH } from "../src/ui/theme.ts";
 
 describe("grid", () => {
   it("starts empty and holds marks in place", () => {

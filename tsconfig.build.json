@@ -8,5 +8,5 @@
     "noEmitOnError": true
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["src/web.ts", "src/platform-web.ts", "src/vite-env.d.ts"]
+  "exclude": ["src/web.ts", "src/platform/browser.ts", "src/vite-env.d.ts"]
 }

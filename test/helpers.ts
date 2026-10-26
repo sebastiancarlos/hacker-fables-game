@@ -4,20 +4,25 @@
  */
 import { WIDTH, HEIGHT, type Game } from "../src/index.ts";
 import { type VirtualScreen } from "./screen.ts";
-import { type Key } from "../src/key.ts";
-import { decodeInput } from "../src/terminal-input.ts";
-import { cloneGrid, createGrid, gridHas, type Grid } from "../src/grid.ts";
-import { chebyshev, findPath, type Vec } from "../src/geometry.ts";
+import { type Key } from "../src/input/key.ts";
+import { decodeInput } from "../src/platform/terminal/input.ts";
+import {
+  cloneGrid,
+  createGrid,
+  gridHas,
+  type Grid,
+} from "../src/world/grid.ts";
+import { chebyshev, findPath, type Vec } from "../src/world/geometry.ts";
 import {
   enemyCells,
   type Enemy,
   type GroundItem,
   type Level,
-} from "../src/world.ts";
-import type { Item } from "../src/items.ts";
-import type { Recording, RecordingEntry } from "../src/recording.ts";
-import type { Standing } from "../src/score.ts";
-import { plain, type RichText } from "../src/style.ts";
+} from "../src/world/map.ts";
+import type { Item } from "../src/player/items.ts";
+import type { Recording, RecordingEntry } from "../src/records/recording.ts";
+import type { Standing } from "../src/records/score.ts";
+import { plain, type RichText } from "../src/ui/style.ts";
 import {
   activeMode,
   createState,
@@ -35,7 +40,7 @@ import {
   type SimEvent,
   type SimState,
   type UiState,
-} from "../src/game-state.ts";
+} from "../src/game/state.ts";
 
 /** A plain view of the game for assertions. */
 export interface GameSnapshot {

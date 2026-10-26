@@ -13,12 +13,12 @@ import { fileURLToPath } from "node:url";
 import { mkdir, writeFile, readFile, readdir, rm } from "node:fs/promises";
 import path from "node:path";
 import { TerminalEmulator } from "./screen.ts";
-import { DATA_ENV } from "../src/platform.ts";
-import { RECORDING_VERSION } from "../src/recording.ts";
-import { SHOTGUN_DMG } from "../src/items.ts";
+import { DATA_ENV } from "../src/platform/node.ts";
+import { RECORDING_VERSION } from "../src/records/recording.ts";
+import { SHOTGUN_DMG } from "../src/player/items.ts";
 import { TITLE_TAGLINE } from "../src/content.ts";
-import { BOSS_DEPTH } from "../src/depth.ts";
-import { startingKit } from "../src/progression.ts";
+import { BOSS_DEPTH } from "../src/world/depth.ts";
+import { startingKit } from "../src/player/progression.ts";
 
 const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const GAME = path.join(ROOT, "src", "main.ts");
