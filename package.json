@@ -5,7 +5,12 @@
   "type": "module",
   "license": "MIT",
   "author": "Sebastian Carlos",
-  "main": "src/main.ts",
+  "bin": {
+    "hacker-fables": "./src/main.ts"
+  },
+  "files": [
+    "src"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/sebastiancarlos/hacker-fables-game.git"

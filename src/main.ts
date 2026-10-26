@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 /**
  * Main: terminal entry point. Run with `node src/main.ts` or `npm start`.
  *

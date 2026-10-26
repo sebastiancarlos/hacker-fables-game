@@ -53,6 +53,21 @@ between releases. Feel free to open issues for bugs or feature requests.
 
 ## Play in the terminal
 
+From npm:
+
+```sh
+npx hacker-fables-game
+```
+
+Or install it globally:
+
+```sh
+npm install -g hacker-fables-game
+hacker-fables
+```
+
+From source:
+
 ```sh
 git clone https://github.com/sebastiancarlos/hacker-fables-game.git
 cd hacker-fables-game
