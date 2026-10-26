@@ -11,41 +11,10 @@ import type { Vec } from "./geometry.ts";
 import { versionHeatColor } from "./theme.ts";
 import { type CellStyle, type Span, spans } from "./style.ts";
 import { ENEMY_FLAVOR, MSG, WOUND, type CountNoun } from "./content.ts";
+import { BOSS_DEPTH, curve } from "./depth.ts";
 
 /** Enemy families. */
 export type EnemyKind = "snake" | "walrus" | "boss";
-
-/** Four snakes nest on level 1, two more per level. */
-export function snakesForDepth(depth: number): number {
-  return 2 * depth + 2;
-}
-
-/** Crowded levels keep the entry stairs clear of snakes. */
-export const CROWD_COUNT = 15;
-
-/** Keep-out radius around the spawn and crowded entries. */
-export const KEEP_OUT = 8;
-
-/**
- * Spawn exclusion anchor: snakes keep their distance from the level-1
- * spawn only. Deeper snakes nest anywhere (null anchor), including
- * near the stairs the player just came down.
- *
- * Exception: crowded levels keep the entry clear instead.
- */
-export function snakeAnchor(
-  depth: number,
-  start: Vec,
-  up: Vec | null,
-): Vec | null {
-  if (depth === 1) {
-    return start;
-  }
-  if (snakesForDepth(depth) >= CROWD_COUNT && up !== null) {
-    return up;
-  }
-  return null;
-}
 
 /**
  * One Python release as an enemy version. The index drives heat, stats,
@@ -129,7 +98,7 @@ export function snakeName(version: PythonVersion): string {
   return `code-snake (Python ${version.short})`;
 }
 
-/** Python 2 nests lowercase; 3.x rears up. */
+/** Python 2 stays lowercase; 3.x rears up. */
 export function snakeGlyph(version: PythonVersion): string {
   return version.major === 2 ? "s" : "S";
 }
@@ -143,30 +112,93 @@ export function snakeColor(version: PythonVersion): CellStyle {
   return versionHeatColor(version.index);
 }
 
+/** The walrus operator := first appeared in Python 3.8. */
+export const WALRUS_BASE_VERSION = pythonVersion("3.8");
+
+/** First depth the walrus operator appears, halfway down the dive. */
+export const WALRUS_MIN_DEPTH = Math.floor(BOSS_DEPTH / 2);
+
+/** The last depth that spawns normal enemies; the boss owns the bottom. */
+const LAST_NORMAL_DEPTH = BOSS_DEPTH - 1;
+
+/** Highest Python version index. */
+const MAX_VERSION = PYTHON_VERSIONS.length - 1;
+
+/** Difficulty curves, one per ramped stat. */
+const DIFFICULTY = {
+  snakes: curve([
+    [1, 4],
+    [2, 6],
+    [BOSS_DEPTH, 60],
+  ]),
+  snakeVersion: curve(
+    [
+      [1, 3],
+      [2, 4],
+      [LAST_NORMAL_DEPTH, MAX_VERSION],
+    ],
+    Math.floor,
+  ),
+  walrusCap: curve(
+    [
+      [WALRUS_MIN_DEPTH, 1],
+      [BOSS_DEPTH, 6],
+    ],
+    Math.floor,
+  ),
+  walrusVersion: curve([
+    [WALRUS_MIN_DEPTH, WALRUS_BASE_VERSION.index],
+    [LAST_NORMAL_DEPTH, MAX_VERSION],
+  ]),
+};
+
+/** Snake count for a depth. */
+export function snakesForDepth(depth: number): number {
+  return DIFFICULTY.snakes(depth);
+}
+
+/** Crowded levels keep the entry stairs clear of snakes. */
+export const CROWD_COUNT = 15;
+
+/** Keep-out radius around the spawn and crowded entries. */
+export const KEEP_OUT = 8;
+
+/**
+ * Spawn exclusion anchor: snakes keep their distance from the level-1
+ * spawn only. Deeper snakes spawn anywhere (null anchor), including
+ * near the stairs the player just came down.
+ *
+ * Exception: crowded levels keep the entry clear instead.
+ */
+export function snakeAnchor(
+  depth: number,
+  start: Vec,
+  up: Vec | null,
+): Vec | null {
+  if (depth === 1) {
+    return start;
+  }
+  if (snakesForDepth(depth) >= CROWD_COUNT && up !== null) {
+    return up;
+  }
+  return null;
+}
+
 /** A version for a depth: the ceiling rises with danger. */
 export function versionForDepth(depth: number, roll: number): PythonVersion {
-  const top = Math.min(PYTHON_VERSIONS.length - 1, depth + 2);
+  const top = DIFFICULTY.snakeVersion(depth);
   return PYTHON_VERSIONS[Math.min(top, Math.floor(roll * (top + 1)))]!;
+}
+
+/** How many walruses a level may spawn. */
+export function walrusCapForDepth(depth: number): number {
+  return depth < WALRUS_MIN_DEPTH ? 0 : DIFFICULTY.walrusCap(depth);
 }
 
 // --- Walrus operator: the two-cell enemy family ---------------------
 
-/** The walrus operator := first appeared in Python 3.8. */
-export const WALRUS_BASE_VERSION = pythonVersion("3.8");
-
-/** First depth the walrus operator nests on. */
-export const WALRUS_MIN_DEPTH = 15;
-
-/** Chance each walrus slot on a depth-15+ level actually nests a walrus. */
+/** Chance each eligible walrus slot actually spawns a walrus. */
 export const WALRUS_CHANCE = 0.25;
-
-/** How many walruses a level may nest: one at depth 15, plus one every 3 levels. */
-export function walrusCapForDepth(depth: number): number {
-  if (depth < WALRUS_MIN_DEPTH) {
-    return 0;
-  }
-  return 1 + Math.floor((depth - WALRUS_MIN_DEPTH) / 3);
-}
 
 /** The walrus keeps this far from the spawn, being rare and nasty. */
 export const WALRUS_KEEP_OUT = 10;
@@ -189,21 +221,18 @@ export function walrusColor(version: PythonVersion): CellStyle {
   return snakeColor(version);
 }
 
-/** Version for a depth, floored at 3.8 (the walrus's debut). */
+/** Version for a depth, floored at 3.8 and maxed before the boss. */
 export function walrusVersionForDepth(
   depth: number,
   roll: number,
 ): PythonVersion {
   const base = WALRUS_BASE_VERSION.index;
-  const top = Math.min(PYTHON_VERSIONS.length - 1, Math.max(base, depth + 2));
+  const top = Math.max(base, DIFFICULTY.walrusVersion(depth));
   const idx = Math.min(top, base + Math.floor(roll * (top - base + 1)));
   return PYTHON_VERSIONS[idx]!;
 }
 
 // --- The GIL-less dev preview: the final boss -----------------------
-
-/** The bottom of the dive, where the GIL-less dev preview nests. */
-export const BOSS_DEPTH = 30;
 
 /** The version the boss dresses as: the last python, still a preview. */
 export const BOSS_VERSION = PYTHON_VERSIONS[PYTHON_VERSIONS.length - 1]!;

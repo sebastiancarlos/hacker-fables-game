@@ -13,7 +13,7 @@ import type {
   RunRecord,
 } from "./game-state.ts";
 import { DEATH_LINE, DUNGEON_NAME, END, WIN_LINE } from "./content.ts";
-import { BOSS_DEPTH } from "./enemies.ts";
+import { BOSS_DEPTH } from "./depth.ts";
 import { END_KEYS } from "./end-keys.ts";
 import { STYLE_REVERSE } from "./theme.ts";
 import { type RichText, linkify, spans } from "./style.ts";

@@ -7,7 +7,8 @@
  */
 import type { Fov } from "./vision.ts";
 import { findPath, type Vec } from "./geometry.ts";
-import { BOSS_DEPTH, enemyName } from "./enemies.ts";
+import { enemyName } from "./enemies.ts";
+import { BOSS_DEPTH } from "./depth.ts";
 import { ELEVATOR_POS, type Enemy } from "./world.ts";
 import { HEIGHT, WIDTH } from "./theme.ts";
 import {

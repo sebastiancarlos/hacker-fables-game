@@ -1,4 +1,5 @@
 import type { RichText } from "./style.ts";
+import { BOSS_DEPTH } from "./depth.ts";
 /**
  * Content: every player-facing word.
  *
@@ -85,7 +86,7 @@ export const COMMANDS_HELP = {
     "entities from the Python bestiary will face you.",
   ],
   bottom: [
-    "Sub-level 30 is the bottom of Bell Labs, the",
+    `Sub-level ${BOSS_DEPTH} is the bottom of Bell Labs, the`,
     "ritualistic place where UNIX first booted. The",
     "Second GIL manifests itself there, in the shape of",
     "the strongest metaphysical entity this puny world",
@@ -95,16 +96,16 @@ export const COMMANDS_HELP = {
   ],
   shotgun: [
     "The Modal Shotgun: Once you find one, grab it with",
-    "^, chamber shells with i (which changes into Vim's",
-    "INSERT BULLET mode), and aim with f. The cursor",
-    "starts on the nearest enemy, but you can move to",
-    "other targets with your movement keys (or enter",
-    '"free aim" mode by pressing o). Press . (Vim\'s',
-    'repeat command) to repeat a "chamber, aim and',
-    'fire" action. Every shotgun carries 20 shells.',
-    "Press ^ on additional shotguns to grab its shells.",
-    "Your total shells are displayed on the status bar",
-    'under "Ammo".',
+    "the comma key, then chamber shells with i (which",
+    "changes into Vim's INSERT BULLET mode), and aim",
+    "with f. The cursor starts on the nearest enemy, but",
+    "you can move to other targets with your movement",
+    'keys (or enter "free aim" mode by pressing o).',
+    "Press . (Vim's repeat command) to repeat a",
+    '"chamber, aim and fire" action. Every shotgun',
+    "carries 20 shells. Press , on additional shotguns",
+    "to grab its shells. Your total shells are displayed",
+    'on the status bar under "Ammo".',
   ],
   visual: [
     "VISUAL BLOCK mode: You unlock this at level 2.",
@@ -514,7 +515,7 @@ Bell Labs. However they found strange manifestations of the Second GIL, now
 understood as a hyperdimensional force of sheer parallelism. These hostile
 "code snakes" quickly disposed of all the Special DevOps forces.
 
-Your job is to reach sub-level 30, where UNIX first booted on a PDP-11, and
+Your job is to reach sub-level ${BOSS_DEPTH}, where UNIX first booted on a PDP-11, and
 shoot the second GIL until it stops moving.`;
 
 export const LORE_LINES: readonly RichText[] = [

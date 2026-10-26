@@ -11,9 +11,6 @@ import { SHELLS_PER_GUN, type ScriptEffect } from "./items.ts";
 /** XP for every snake kill, tuning knob. */
 export const XP_PER_KILL = 2;
 
-/** Player level that unlocks visual block. */
-export const VISUAL_UNLOCK_LEVEL = 2;
-
 /** XP debt to rise from `level` to the next. */
 export function xpNext(level: number): number {
   return level * 50;
@@ -54,7 +51,7 @@ export function levelFromXp(xp: number): { plevel: number; xp: number } {
   return { plevel, xp: left };
 }
 
-/** Heals lead the cycle so a deep start can mend through its first nest. */
+/** Heals lead the cycle so a deep start can mend through its first fight. */
 const START_SCRIPT_CYCLE: ScriptEffect[] = ["heal", "all", "heal", "v2"];
 
 /** Scrolls banked by a depth: one per four levels, heals first. */

@@ -9,11 +9,11 @@
 import type { Cell, RichText } from "./style.ts";
 import { createRng, type Rng } from "./rng.ts";
 import {
-  BOSS_DEPTH,
   type EnemyKind,
   type EnemyRef,
   type PythonVersion,
 } from "./enemies.ts";
+import { BOSS_DEPTH } from "./depth.ts";
 import type { Item, ScriptEffect } from "./items.ts";
 import type { Enemy, Level } from "./world.ts";
 import type { Vec } from "./geometry.ts";

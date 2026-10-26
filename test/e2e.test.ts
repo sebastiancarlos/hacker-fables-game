@@ -17,6 +17,8 @@ import { DATA_ENV } from "../src/platform.ts";
 import { RECORDING_VERSION } from "../src/recording.ts";
 import { SHOTGUN_DMG } from "../src/items.ts";
 import { TITLE_TAGLINE } from "../src/content.ts";
+import { BOSS_DEPTH } from "../src/depth.ts";
+import { startingKit } from "../src/progression.ts";
 
 const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const GAME = path.join(ROOT, "src", "main.ts");
@@ -341,8 +343,9 @@ describe("hacker-fables e2e", { concurrency: true }, () => {
       level: 11,
     });
     assert.equal(code, 0);
-    assert.match(output, /Dlvl:11  Lv:3/);
-    assert.match(output, /Lv:3 /);
+    const { plevel } = startingKit(11);
+    assert.match(output, new RegExp(`Dlvl:11  Lv:${plevel}`));
+    assert.match(output, new RegExp(`Lv:${plevel} `));
     assert.match(output, /Which script to execute\?/);
     // Depth 11 banks two scrolls: a heal, then a sweep.
     assert.match(output, /a\) script of s\/HP:/);
@@ -364,10 +367,10 @@ describe("hacker-fables e2e", { concurrency: true }, () => {
     const { output, code } = await runGame(["y" + ">" + "l".repeat(5), "q"], {
       arena: false,
       seed: 7,
-      level: 30,
+      level: BOSS_DEPTH,
     });
     assert.equal(code, 0);
-    assert.match(output, /Dlvl:30 /);
+    assert.match(output, new RegExp(`Dlvl:${BOSS_DEPTH} `));
     // The bottom has no down stairs, and `>` says so.
     assert.match(output, /You can't go down here\./);
     // The lone gun sits five cells east of the arrival stairs.
@@ -1250,12 +1253,11 @@ describe("hacker-fables e2e", { concurrency: true }, () => {
   });
 
   it("announces death once on the final frame and ends the turn", async () => {
-    // Deep levels swarm: sixty waits on 17 guarantees the end. Level 15
-    // used to too, until the walrus operator joined the wander stream.
+    // The last normal level swarms: sixty waits guarantee the end.
     const { output } = await runGame(["w".repeat(60), "q"], {
       arena: false,
       seed: 7,
-      level: 17,
+      level: BOSS_DEPTH - 1,
     });
     // The line shows in the message row and again on the end screen it
     // opens, so the final visible frame carries it exactly once.

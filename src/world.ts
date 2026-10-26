@@ -4,7 +4,6 @@
 import * as ROT from "rot-js";
 import { createRng, SEED_MODULUS, type Rng } from "./rng.ts";
 import {
-  BOSS_DEPTH,
   BOSS_VERSION,
   CROWD_COUNT,
   ENEMY_KINDS,
@@ -20,6 +19,7 @@ import {
   type EnemyKind,
   type PythonVersion,
 } from "./enemies.ts";
+import { BOSS_DEPTH, steps } from "./depth.ts";
 import { chebyshev, nearestFreeCell, type Vec } from "./geometry.ts";
 import {
   scriptSpec,
@@ -29,6 +29,39 @@ import {
 } from "./items.ts";
 import { HEIGHT, WIDTH } from "./theme.ts";
 import { createGrid, gridAdd, gridDelete, gridHas, type Grid } from "./grid.ts";
+
+/** First depth where a level can drop a script. */
+export const SCRIPT_DROP_DEPTH = Math.ceil(BOSS_DEPTH * 0.4);
+
+/** First depth where a level carries a second shotgun. */
+export const SECOND_GUN_DEPTH = Math.ceil(BOSS_DEPTH * 0.6);
+
+/** First depth where a level carries an extra shotgun and script. */
+export const EXTRA_LOOT_DEPTH = 11;
+
+/** Shotguns placed on a level, by depth. Later guns are ammo pickups. */
+const GUNS = steps([
+  [1, 1],
+  [SECOND_GUN_DEPTH, 2],
+  [EXTRA_LOOT_DEPTH, 3],
+]);
+
+/** How many shotguns a level carries. */
+export function gunsForDepth(depth: number): number {
+  return GUNS(depth);
+}
+
+/** Scripts dropped on a level, by depth. */
+const SCROLLS = steps([
+  [1, 0],
+  [SCRIPT_DROP_DEPTH, 1],
+  [EXTRA_LOOT_DEPTH, 2],
+]);
+
+/** How many scripts a level drops. */
+export function scrollsForDepth(depth: number): number {
+  return SCROLLS(depth);
+}
 
 /** An item or shell pile lying on the floor. */
 export interface GroundItem {
@@ -489,31 +522,31 @@ export function buildLevel(depth: number, opts: BuildOpts): Level {
   const enemies: Enemy[] = [];
   let down: Vec;
   let up: Vec | null;
-  const nest: Vec[] = [];
-  const nestSize = snakesForDepth(depth);
-  if (nestSize >= CROWD_COUNT) {
-    // Crowded levels fix the stairs first so nesting snakes keep
+  const snakeSpots: Vec[] = [];
+  const snakeCount = snakesForDepth(depth);
+  if (snakeCount >= CROWD_COUNT) {
+    // Crowded levels fix the stairs first so spawning snakes keep
     // clear of the up stairs the player arrives on.
     down = at(placed, start, 10);
     up = at([...placed, down], down, 10);
     placed.push(down, up);
-    for (let i = 0; i < nestSize; i++) {
+    for (let i = 0; i < snakeCount; i++) {
       const s = at(placed, snakeAnchor(depth, start, up), KEEP_OUT);
       placed.push(s);
-      nest.push(s);
+      snakeSpots.push(s);
     }
   } else {
-    for (let i = 0; i < nestSize; i++) {
+    for (let i = 0; i < snakeCount; i++) {
       const s = at(placed, snakeAnchor(depth, start, null), KEEP_OUT);
       placed.push(s);
-      nest.push(s);
+      snakeSpots.push(s);
     }
     down = at(placed, start, 10);
     up = depth === 1 ? null : at([...placed, down], down, 10);
   }
 
   // Versions are a pure function of (depth, salt).
-  nest.forEach((pos, i) => {
+  snakeSpots.forEach((pos, i) => {
     const salt =
       ((pos.x * SALT_MULTIPLIER + pos.y) * SALT_MULTIPLIER + i) *
         SALT_MULTIPLIER +
@@ -531,23 +564,24 @@ export function buildLevel(depth: number, opts: BuildOpts): Level {
   const lootRng = rng.fork("loot");
 
   // spawn scripts
-  if (depth > 10) {
+  for (let i = 0; i < scrollsForDepth(depth); i++) {
     const roll = lootRng.uniform();
     const effect: ScriptEffect =
       roll < 1 / 3 ? "v2" : roll < 2 / 3 ? "all" : "heal";
     const spot = randomFloor(lootRng, walls, placed, null, 0, width, height);
+    placed.push(spot);
     loot.push({ item: scriptSpec(effect), x: spot.x, y: spot.y });
   }
 
-  // spawn more guns (where the ammo drought starts)
-  if (depth >= 18) {
+  // spawn extra guns (later guns are ammo pickups)
+  for (let i = 1; i < gunsForDepth(depth); i++) {
     const spot = randomFloor(lootRng, walls, placed, null, 0, width, height);
     placed.push(spot);
     loot.push({ item: shotgunSpec(), x: spot.x, y: spot.y });
   }
 
-  // The walrus operator: rare, two cells, depth 15+. The cap grows by one
-  // every three levels.
+  // The walrus operator: rare, two cells, from its introduction depth.
+  // Its cap grows with depth.
   const walrusRng = rng.fork("walrus");
   for (let i = 0, cap = walrusCapForDepth(depth); i < cap; i++) {
     if (walrusRng.uniform() >= WALRUS_CHANCE) {

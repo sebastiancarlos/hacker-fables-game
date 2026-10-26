@@ -5,7 +5,8 @@
  * and S.sim.gilGone only. Narration is queued as typed events; the presenter
  * decides what to paint, so no screen writes happen here.
  */
-import { VISUAL_UNLOCK_LEVEL, XP_PER_KILL, xpNext } from "./progression.ts";
+import { XP_PER_KILL, xpNext } from "./progression.ts";
+import { VISUAL_UNLOCK_LEVEL } from "./depth.ts";
 import type { Enemy } from "./world.ts";
 import { MAX_HP, type GameState } from "./game-state.ts";
 import { ENEMY_KINDS } from "./enemies.ts";

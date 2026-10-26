@@ -51,7 +51,6 @@ import {
 } from "../src/geometry.ts";
 import { alignColumns, fitRow, visibleLength, wrapText } from "../src/text.ts";
 import {
-  BOSS_DEPTH,
   BOSS_VERSION,
   bossColor,
   corruptionTier,
@@ -75,8 +74,10 @@ import {
   walrusColor,
   walrusName,
   walrusVersionForDepth,
+  WALRUS_MIN_DEPTH,
   woundWord,
 } from "../src/enemies.ts";
+import { BOSS_DEPTH, steps, VISUAL_UNLOCK_LEVEL } from "../src/depth.ts";
 import {
   chooseShots,
   groupScripts,
@@ -93,7 +94,6 @@ import {
   levelFromXp,
   startingKit,
   startingScripts,
-  VISUAL_UNLOCK_LEVEL,
   XP_PER_KILL,
   xpForClearedLevels,
   xpNext,
@@ -103,6 +103,11 @@ import {
   buildLevel,
   bossArtRows,
   ELEVATOR_POS,
+  EXTRA_LOOT_DEPTH,
+  gunsForDepth,
+  scrollsForDepth,
+  SECOND_GUN_DEPTH,
+  SCRIPT_DROP_DEPTH,
   type Enemy,
   type Level,
 } from "../src/world.ts";
@@ -223,6 +228,7 @@ import {
   EXIT_SEALED,
   FLOOR_CLEAR_LINE,
   MSG,
+  SCRIPT_NAMES,
   TITLE_ART,
   TITLE_TAGLINE,
   TITLE_TEXT,
@@ -328,6 +334,20 @@ function armShotgun(game: TestGame): void {
   game.onKey("E");
   game.onKey("a");
   game.onKey("i");
+}
+
+/** Leave only the walrus alive, so a combat test is not seed-bound. */
+function isolateWalrus(game: TestGame): void {
+  game.state.sim.level.enemies = game.state.sim.level.enemies.filter(
+    (e) => e.kind === "walrus",
+  );
+}
+
+/** Leave only snakes alive, so a snake test is not seed-bound. */
+function isolateSnakes(game: TestGame): void {
+  game.state.sim.level.enemies = game.state.sim.level.enemies.filter(
+    (e) => e.kind === "snake",
+  );
 }
 
 /** One recorded command for the tally and score tests. */
@@ -447,7 +467,9 @@ describe("rules", () => {
     const up = { x: 30, y: 10 };
     assert.deepEqual(snakeAnchor(1, start, up), start);
     assert.equal(snakeAnchor(2, start, up), null);
-    assert.equal(snakeAnchor(6, start, up), null);
+    assert.equal(snakeAnchor(4, start, up), null);
+    assert.deepEqual(snakeAnchor(5, start, up), up);
+    assert.deepEqual(snakeAnchor(6, start, up), up);
     assert.deepEqual(snakeAnchor(7, start, up), up);
     assert.deepEqual(snakeAnchor(15, start, up), up);
     assert.deepEqual(snakeAnchor(20, start, up), up);
@@ -569,9 +591,11 @@ describe("rules", () => {
     assert.equal(versionForDepth(1, 0.5).index, 2);
     assert.equal(versionForDepth(1, 0.999).index, 3);
     assert.equal(versionForDepth(2, 0.999).index, 4);
-    assert.equal(versionForDepth(20, 0.999).index, 22);
-    assert.equal(versionForDepth(20, 0).index, 0);
-    assert.equal(versionForDepth(30, 0.999).index, 24);
+    assert.equal(versionForDepth(3, 0.999).index, 5);
+    assert.equal(versionForDepth(BOSS_DEPTH - 1, 0.999).index, 24);
+    assert.equal(versionForDepth(BOSS_DEPTH, 0.999).index, 24);
+    assert.equal(versionForDepth(BOSS_DEPTH, 0).index, 0);
+    assert.equal(versionForDepth(BOSS_DEPTH + 10, 0.999).index, 24);
   });
 
   it("scales the walrus above the snake of the same version", () => {
@@ -623,21 +647,31 @@ describe("rules", () => {
 
   it("floors walrus versions at 3.8 and raises the ceiling with depth", () => {
     // The operator did not exist before 3.8, so no roll reaches 2.x.
-    assert.equal(walrusVersionForDepth(15, 0).label, "3.8");
-    assert.equal(walrusVersionForDepth(15, 0.2).label, "3.8");
-    assert.equal(walrusVersionForDepth(15, 0.999).label, "3.9");
-    assert.equal(walrusVersionForDepth(22, 0.999).label, "3.16 (dev preview)");
-    assert.equal(walrusVersionForDepth(30, 0.999).label, "3.16 (dev preview)");
+    assert.equal(walrusVersionForDepth(WALRUS_MIN_DEPTH, 0).label, "3.8");
+    assert.equal(walrusVersionForDepth(WALRUS_MIN_DEPTH, 0.2).label, "3.8");
+    assert.equal(
+      walrusVersionForDepth(WALRUS_MIN_DEPTH + 1, 0.999).label,
+      "3.9",
+    );
+    assert.equal(walrusVersionForDepth(11, 0.999).label, "3.13");
+    assert.equal(
+      walrusVersionForDepth(BOSS_DEPTH - 1, 0.999).label,
+      "3.16 (dev preview)",
+    );
+    assert.equal(
+      walrusVersionForDepth(BOSS_DEPTH, 0.999).label,
+      "3.16 (dev preview)",
+    );
   });
 
-  it("raises the walrus cap by one every three levels", () => {
-    assert.equal(walrusCapForDepth(14), 0);
-    assert.equal(walrusCapForDepth(15), 1);
-    assert.equal(walrusCapForDepth(17), 1);
-    assert.equal(walrusCapForDepth(18), 2);
-    assert.equal(walrusCapForDepth(20), 2);
-    assert.equal(walrusCapForDepth(21), 3);
-    assert.equal(walrusCapForDepth(30), 6);
+  it("raises the walrus cap with depth", () => {
+    assert.equal(walrusCapForDepth(WALRUS_MIN_DEPTH - 1), 0);
+    assert.equal(walrusCapForDepth(WALRUS_MIN_DEPTH), 1);
+    assert.equal(walrusCapForDepth(WALRUS_MIN_DEPTH + 1), 1);
+    assert.equal(walrusCapForDepth(9), 2);
+    assert.equal(walrusCapForDepth(12), 4);
+    assert.equal(walrusCapForDepth(BOSS_DEPTH - 1), 5);
+    assert.equal(walrusCapForDepth(BOSS_DEPTH), 6);
   });
 
   it("lists seen snakes and known ground before the unknown", () => {
@@ -838,18 +872,18 @@ describe("rules", () => {
   it("banks scrolls and ammo into a start kit", () => {
     assert.deepEqual(startingScripts(3), []);
     assert.deepEqual(startingScripts(11), ["heal", "all"]);
-    assert.deepEqual(startingScripts(16), ["heal", "all", "heal", "v2"]);
+    assert.deepEqual(startingScripts(14), ["heal", "all", "heal"]);
     assert.deepEqual(startingKit(1), {
       plevel: 1,
       xp: 0,
       shells: 0,
       scripts: [],
     });
-    assert.deepEqual(startingKit(16), {
+    assert.deepEqual(startingKit(14), {
       plevel: 5,
-      xp: 40,
-      shells: 300,
-      scripts: ["heal", "all", "heal", "v2"],
+      xp: 200,
+      shells: 260,
+      scripts: ["heal", "all", "heal"],
     });
     assert.equal(
       scriptSpec("heal").name,
@@ -859,10 +893,10 @@ describe("rules", () => {
     assert.equal(scriptSpec("v2").kind, "script");
   });
 
-  it("nests four snakes on level 1 and two more per level", () => {
+  it("spawns four snakes on level 1, then follows the depth curve", () => {
     assert.equal(snakesForDepth(1), 4);
     assert.equal(snakesForDepth(2), 6);
-    assert.equal(snakesForDepth(15), 32);
+    assert.equal(snakesForDepth(BOSS_DEPTH - 1), 56);
   });
 
   it("carries no scripts by default", () => {
@@ -3249,12 +3283,12 @@ describe("enemies", () => {
     );
   });
 
-  it("nests a two-cell walrus only from depth 15", () => {
+  it("spawns a two-cell walrus only from the walrus depth", () => {
     const shallow = snapshot(
       bootGame({
         arena: false,
-        seed: 29,
-        depth: 14,
+        seed: 38,
+        depth: 9,
       }).game,
     );
     assert.equal(
@@ -3264,12 +3298,12 @@ describe("enemies", () => {
     const deep = snapshot(
       bootGame({
         arena: false,
-        seed: 29,
-        depth: 15,
+        seed: 38,
+        depth: 10,
       }).game,
     );
     const walrus = deep.enemies.find((e) => e.kind === "walrus");
-    assert.ok(walrus, "expected a walrus at depth 15");
+    assert.ok(walrus, "expected a walrus at depth 10");
     assert.equal(walrus.cells.length, 2);
     // The glyph always reads ":=": the tail sits one cell left of the head.
     assert.deepEqual(walrus.cells[1]!, {
@@ -3279,30 +3313,31 @@ describe("enemies", () => {
     assert.ok(Number.parseFloat(walrus.version) >= 3.8);
   });
 
-  it("nests more walruses as the cap grows every three levels", () => {
+  it("spawns more walruses as the cap grows", () => {
     const walruses = (seed: number, depth: number): number =>
       snapshot(bootGame({ arena: false, seed, depth }).game).enemies.filter(
         (e) => e.kind === "walrus",
       ).length;
-    // Depth 18 cap 2 (seed 53 nests both); depth 24 cap 4 (seed 12 nests three).
-    assert.equal(walruses(53, 18), 2);
-    assert.equal(walruses(12, 24), 3);
-    // No level ever nests past its cap.
-    for (const depth of [15, 18, 21, 24]) {
+    // Depth 9 cap 2 (seed 80 spawns both); depth 13 cap 4 (seed 23 spawns all).
+    assert.equal(walruses(80, 9), 2);
+    assert.equal(walruses(23, 13), 4);
+    // No level ever spawns past its cap.
+    for (const depth of [7, 9, 11, 13, 14]) {
       for (let seed = 1; seed <= 20; seed++) {
         const n = walruses(seed, depth);
         assert.ok(
           n <= walrusCapForDepth(depth),
-          `depth ${depth} seed ${seed} nested ${n}`,
+          `depth ${depth} seed ${seed} spawned ${n}`,
         );
       }
     }
   });
 
   it("fights the walrus as one enemy across two cells", async () => {
-    // Seed 36, depth 15: the walrus nests a few cells from the spawn,
-    // so the duel runs undisturbed.
-    const { game, screen } = bootGame({ arena: false, seed: 36, depth: 15 });
+    // Seed 25, depth 8: the walrus appears with a quiet approach, so the
+    // duel runs undisturbed.
+    const { game, screen } = bootGame({ arena: false, seed: 25, depth: 8 });
+    isolateWalrus(game);
     assert.ok(snapshot(game).enemies.some((e) => e.kind === "walrus"));
     await driveUntil(
       game,
@@ -3315,9 +3350,12 @@ describe("enemies", () => {
     );
     const s = snapshot(game);
     assert.equal(s.dead, false);
-    assert.match(
-      s.message,
-      /The walrus operator \(Python [\d.]+.*\) dissolves into pixels!/,
+    assert.ok(
+      s.log.some((line) =>
+        /The walrus operator \(Python [\d.]+.*\) dissolves into pixels!/.test(
+          line,
+        ),
+      ),
     );
   });
 });
@@ -3772,7 +3810,7 @@ describe("corruption tint", () => {
 
   it("warns on entering the bottom, only while its hostiles live", () => {
     // The bottom's popup belongs to the entry, not the descent: a shortcut
-    // straight to the bottom (--level 30) shows it too.
+    // straight to the bottom shows it too.
     const { game, screen } = bootGame({
       arena: false,
       seed: 7,
@@ -4292,7 +4330,7 @@ describe("the GIL-less dev preview", () => {
     assert.match(text, new RegExp(WIN_LINE.replace(/\./g, "\\.")));
     assert.match(
       text,
-      /You defeated the Second GIL on "Bell Labs" Sub-level 30\./,
+      new RegExp(`You defeated the Second GIL on ${levelLabel(BOSS_DEPTH)}\\.`),
     );
     assert.match(text, /high score #1 of 1/);
   });
@@ -4532,22 +4570,33 @@ describe("headless game", () => {
   });
 
   it("reports a surviving snake honestly", async () => {
-    // Seed 3 nests a 3.10 (7 HP) in the open: one shell wounds it.
-    const { game } = bootGame({ arena: false, seed: 3, depth: 16 });
+    // Seed 3 spawns a tough snake in the open: one shell only wounds it.
+    const { game } = bootGame({
+      arena: false,
+      seed: 3,
+      depth: BOSS_DEPTH - 1,
+    });
+    isolateSnakes(game);
     game.onKey("i");
     game.onKey("f");
+    const cursor = game.state.ui.cursor;
+    const target = snapshot(game).enemies.find(
+      (e) => e.x === cursor.x && e.y === cursor.y,
+    );
+    assert.ok(target, "expected an aimed snake");
     game.onKey("\r");
     await game.idle();
     const s = snapshot(game);
-    assert.match(
-      s.message,
-      /You blast the code-snake \(Python 3\.10\)\. It reels\./,
+    const blast = `You blast the ${enemyName("snake", pythonVersion(target.version))}. It reels.`;
+    assert.ok(
+      s.log.some((line) => line.includes(blast)),
+      `expected the log to report the blast: ${s.log.join(" | ")}`,
     );
-    assert.equal(snakesOf(s).length, 34);
+    assert.equal(snakesOf(s).length, snakesForDepth(BOSS_DEPTH - 1));
   });
 
   it("restores health with a heal script", async () => {
-    // Seed 2 nests a heal script near spawn on depth 12: the sustain
+    // Seed 2 places a heal script near spawn on depth 12: the sustain
     // loop the XP curve assumes, independent of kill counts.
     const { game, screen } = bootGame({ arena: false, seed: 2, depth: 12 });
     const target = snapshot(game).items.find((i) => i.name.includes("HP:"));
@@ -4593,20 +4642,61 @@ describe("headless game", () => {
     assert.ok(healAmounts.every((a) => a > 0));
   });
 
-  it("nests a second shotgun where the ammo drought starts", () => {
-    // Depth 18+ spawns two guns; below that, exactly one.
-    const deep = snapshot(bootGame({ arena: false, seed: 7, depth: 18 }).game);
+  it("places extra shotguns at their milestones", () => {
+    // The table drives both the count and the placed loot.
+    assert.equal(gunsForDepth(SECOND_GUN_DEPTH - 1), 1);
+    assert.equal(gunsForDepth(SECOND_GUN_DEPTH), 2);
+    assert.equal(gunsForDepth(EXTRA_LOOT_DEPTH - 1), 2);
+    assert.equal(gunsForDepth(EXTRA_LOOT_DEPTH), 3);
     const shallow = snapshot(
       bootGame({
         arena: false,
         seed: 7,
-        depth: 17,
+        depth: SECOND_GUN_DEPTH - 1,
       }).game,
     );
-    const guns = (s: typeof deep): number =>
+    const second = snapshot(
+      bootGame({ arena: false, seed: 7, depth: SECOND_GUN_DEPTH }).game,
+    );
+    const third = snapshot(
+      bootGame({ arena: false, seed: 7, depth: EXTRA_LOOT_DEPTH }).game,
+    );
+    const guns = (s: typeof shallow): number =>
       s.items.filter((i) => i.name === "Modal Shotgun").length;
     assert.equal(guns(shallow), 1);
-    assert.equal(guns(deep), 2);
+    assert.equal(guns(second), 2);
+    assert.equal(guns(third), 3);
+  });
+
+  it("holds step values between milestones", () => {
+    const value = steps([
+      [1, 1],
+      [12, 2],
+      [14, 3],
+    ]);
+    assert.equal(value(0), 1);
+    assert.equal(value(1), 1);
+    assert.equal(value(11), 1);
+    assert.equal(value(12), 2);
+    assert.equal(value(13), 2);
+    assert.equal(value(14), 3);
+    assert.equal(value(99), 3);
+  });
+
+  it("drops extra scripts at their milestones", () => {
+    const scriptNames = new Set<string>(Object.values(SCRIPT_NAMES));
+    const scripts = (depth: number): number => {
+      const s = snapshot(bootGame({ arena: false, seed: 7, depth }).game);
+      return s.items.filter((i) => scriptNames.has(i.name)).length;
+    };
+    assert.equal(scrollsForDepth(SCRIPT_DROP_DEPTH - 1), 0);
+    assert.equal(scrollsForDepth(SCRIPT_DROP_DEPTH), 1);
+    assert.equal(scrollsForDepth(EXTRA_LOOT_DEPTH - 1), 1);
+    assert.equal(scrollsForDepth(EXTRA_LOOT_DEPTH), 2);
+    assert.equal(scripts(SCRIPT_DROP_DEPTH - 1), 0);
+    assert.equal(scripts(SCRIPT_DROP_DEPTH), 1);
+    assert.equal(scripts(EXTRA_LOOT_DEPTH - 1), 1);
+    assert.equal(scripts(EXTRA_LOOT_DEPTH), 2);
   });
 
   it("spawns level 1 on the surface hatch", () => {
@@ -4969,8 +5059,9 @@ describe("headless game", () => {
   });
 
   it("fires one round at a walrus even though the block covers both tiles", async () => {
-    // Seed 36, depth 15 nests a walrus near the spawn.
-    const { game, screen } = bootGame({ arena: false, seed: 36, depth: 15 });
+    // Seed 1, depth 11 spawns a walrus with a quiet approach.
+    const { game, screen } = bootGame({ arena: false, seed: 1, depth: 11 });
+    isolateWalrus(game);
     assert.ok(snapshot(game).enemies.some((e) => e.kind === "walrus"));
     game.onKey("i"); // chamber the shotgun the deep-start kit grants
     await game.idle();
@@ -5040,11 +5131,12 @@ describe("headless game", () => {
     };
     const { game, screen } = bootGame({
       arena: false,
-      seed: 36,
-      depth: 15,
+      seed: 25,
+      depth: 8,
       sleep,
     });
     screenRef = screen;
+    isolateWalrus(game);
     game.onKey("i"); // chamber the shotgun the deep-start kit grants
     await game.idle();
     await driveUntil(
@@ -5289,7 +5381,7 @@ describe("headless game", () => {
     const { game } = bootGame({ arena: false, seed: 7, depth: 3 });
     const s = snapshot(game);
     assert.equal(s.depth, 3);
-    assert.equal(snakesOf(s).length, 8);
+    assert.equal(snakesOf(s).length, snakesForDepth(3));
     assert.equal(s.wielded, "Modal Shotgun");
     assert.equal(s.shells, 40);
     assert.equal(s.turns, 0);
@@ -5297,15 +5389,15 @@ describe("headless game", () => {
   });
 
   it("banks rank and scrolls into a deep start", () => {
-    // Clearing levels 1..15 earns rank 5 with 40 XP left over, and a
-    // careful dive would carry four scrolls plus the shells.
-    const { game } = bootGame({ arena: false, seed: 7, depth: 16 });
+    // Clearing levels 1..13 earns rank 5 with 200 XP left over, and a
+    // careful dive would carry three scrolls plus the shells.
+    const { game } = bootGame({ arena: false, seed: 7, depth: 14 });
     const s = snapshot(game);
     assert.equal(s.plevel, 5);
-    assert.equal(s.xp, 40);
-    assert.equal(s.shells, 300);
+    assert.equal(s.xp, 200);
+    assert.equal(s.shells, 260);
     assert.equal(s.visualUnlocked, true);
-    assert.equal(s.inventory.filter((n) => n.includes("script")).length, 4);
+    assert.equal(s.inventory.filter((n) => n.includes("script")).length, 3);
     // The scrolls are real: the execute menu opens on them.
     game.onKey("s");
     assert.equal(snapshot(game).mode, "menu");
@@ -5313,14 +5405,14 @@ describe("headless game", () => {
 
   it("snakes below keep moving while upstairs", () => {
     const fresh = bootGame({ arena: false, seed: 7 });
-    const nest = snakeCellsOf(snapshot(fresh.game));
+    const initialSnakes = snakeCellsOf(snapshot(fresh.game));
     const { game } = bootGame({ arena: false, seed: 7, depth: 2 });
     game.onKey("w".repeat(8));
     assert.ok(snapshot(game).hp > 0, "survived the upstairs wait");
     game.onKey("<");
     const s = snapshot(game);
     assert.equal(s.depth, 1);
-    assert.notDeepEqual(snakeCellsOf(s), nest);
+    assert.notDeepEqual(snakeCellsOf(s), initialSnakes);
   });
 
   it("wanders only the floors beside the player", () => {
@@ -5354,16 +5446,20 @@ describe("headless game", () => {
   });
 
   it("keeps crowded levels clear around the entry stairs", () => {
-    const { game } = bootGame({ arena: false, seed: 7, depth: 15 });
+    const { game } = bootGame({
+      arena: false,
+      seed: 7,
+      depth: BOSS_DEPTH - 1,
+    });
     const s = snapshot(game);
-    assert.equal(s.depth, 15);
-    assert.equal(snakesOf(s).length, 32);
+    assert.equal(s.depth, BOSS_DEPTH - 1);
+    assert.equal(snakesOf(s).length, snakesForDepth(BOSS_DEPTH - 1));
     const up = s.stairsUp;
     assert.ok(up !== null);
     for (const c of snakeCellsOf(s)) {
       assert.ok(
         chebyshev(c, up) >= 8,
-        `snake at ${c.x},${c.y} nests too close to the entry`,
+        `snake at ${c.x},${c.y} spawns too close to the entry`,
       );
     }
   });
