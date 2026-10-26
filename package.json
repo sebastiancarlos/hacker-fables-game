@@ -6,10 +6,10 @@
   "license": "MIT",
   "author": "Sebastian Carlos",
   "bin": {
-    "hacker-fables": "./src/main.ts"
+    "hacker-fables": "dist/cli/main.js"
   },
   "files": [
-    "src"
+    "dist/cli"
   ],
   "repository": {
     "type": "git",
@@ -26,6 +26,8 @@
     "start": "node src/main.ts",
     "dev": "vite",
     "build": "vite build",
+    "build:release": "tsc -p tsconfig.build.json",
+    "prepack": "npm run build:release",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "node --test \"test/**/*.test.ts\"",
