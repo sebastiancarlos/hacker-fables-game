@@ -116,7 +116,7 @@ import {
   type Enemy,
   type Level,
 } from "../src/world/map.ts";
-import { HEIGHT, WIDTH } from "../src/ui/theme.ts";
+import { GUTTER_W, HEIGHT, WIDTH } from "../src/ui/theme.ts";
 import {
   drawCursor,
   enemyColor,
@@ -1319,9 +1319,10 @@ describe("terminal emulator", () => {
   it("reports a boot frame through the virtual screen", () => {
     const { screen } = bootGame();
     assert.equal(screen.frame().split("\n").length, 25);
-    assert.ok(screen.row(0).startsWith("Press ? for help."));
-    assert.ok(screen.row(23).startsWith("Dlvl:1  Lv:1  Xp:0/50"));
-    assert.equal(screen.row(24), "Vim Commands (0):".padEnd(80));
+    assert.equal(screen.row(0).slice(0, GUTTER_W), "~   ");
+    assert.ok(screen.contentRow(0).startsWith("Press ? for help."));
+    assert.ok(screen.contentRow(23).startsWith("Dlvl:1  Lv:1  Xp:0/50"));
+    assert.equal(screen.contentRow(24), "Vim Commands (0):".padEnd(WIDTH));
     assert.ok(screen.frame().includes("@"));
   });
 });
@@ -1530,14 +1531,14 @@ describe("command tally", () => {
     assert.equal(snapshot(game).depth, 2);
     assert.equal(snapshot(game).commands.length, before + 1);
     assert.match(
-      screen.row(24),
+      screen.contentRow(24),
       new RegExp(`^Vim Commands \\(${before + 1}\\): *$`),
     );
     // A command on the new level shows again, still under the same total.
     game.onKey("w");
     assert.equal(snapshot(game).commands.length, before + 2);
     assert.match(
-      screen.row(24),
+      screen.contentRow(24),
       new RegExp(`^Vim Commands \\(${before + 2}\\): w`),
     );
   });
@@ -1548,7 +1549,7 @@ describe("command tally", () => {
     game.onKey("?"); // opens the help menu; the `?` itself is a play command
     game.onKey("q"); // closes the menu, not a gameplay command
     assert.deepEqual(snapshot(game).commands, ["h", "h", "l", "?"]);
-    assert.match(screen.row(24), /^Vim Commands \(4\): h \(x2\), l, \?/);
+    assert.match(screen.contentRow(24), /^Vim Commands \(4\): h \(x2\), l, \?/);
   });
 
   it("records a fire sequence and the label of its repeat", async () => {
@@ -1567,7 +1568,7 @@ describe("command tally", () => {
       ".(fire)",
     ]);
     assert.match(
-      screen.row(24),
+      screen.contentRow(24),
       /^Vim Commands \(\d+\): .*i, f, RET, \.\(fire\)/,
     );
   });
@@ -1987,7 +1988,7 @@ describe("count prefix", () => {
     game.onKey("5j");
     assert.deepEqual(snapshot(game).player, { x: 40, y: 15 });
     assert.deepEqual(snapshot(game).commands, ["5j"]);
-    assert.match(screen.row(24), /^Vim Commands \(1\): 5j/);
+    assert.match(screen.contentRow(24), /^Vim Commands \(1\): 5j/);
   });
 
   it("stops a counted run at a wall like a plain run", () => {
@@ -3211,12 +3212,12 @@ describe("enemies", () => {
       walls: createGrid(),
     });
     drawCursor(S, screen);
-    assert.deepEqual(screen.at(5, 5 + MAP_TOP), {
+    assert.deepEqual(screen.mapAt(5, 5), {
       ch: "=",
       fg: "red",
       reverse: true,
     });
-    assert.deepEqual(screen.at(4, 5 + MAP_TOP), {
+    assert.deepEqual(screen.mapAt(4, 5), {
       ch: ":",
       fg: "red",
       reverse: true,
@@ -3241,13 +3242,13 @@ describe("enemies", () => {
     render(S, screen);
     // Lands on the walrus, both tiles lit.
     assert.deepEqual(S.ui.cursor, { x: 4, y: 5 });
-    assert.equal(screen.at(4, 5 + MAP_TOP)?.reverse, true);
-    assert.equal(screen.at(5, 5 + MAP_TOP)?.reverse, true);
+    assert.equal(screen.mapAt(4, 5)?.reverse, true);
+    assert.equal(screen.mapAt(5, 5)?.reverse, true);
     lookStep(S, 1, 0);
     render(S, screen);
     // The next step is past the whole glyph, which is now unlit.
     assert.deepEqual(S.ui.cursor, { x: 6, y: 5 });
-    assert.notEqual(screen.at(5, 5 + MAP_TOP)?.reverse, true);
+    assert.notEqual(screen.mapAt(5, 5)?.reverse, true);
   });
 
   it("covers exactly the walrus on first touch, then moves past next step", () => {
@@ -3279,10 +3280,10 @@ describe("enemies", () => {
     );
     // The block covers both tiles: the head stays reversed and the moving
     // corner on the tail carries the cursor highlight.
-    assert.equal(screen.at(3, 5 + MAP_TOP)?.reverse, true);
-    assert.equal(screen.at(5, 5 + MAP_TOP)?.reverse, true);
-    assert.equal(screen.at(4, 5 + MAP_TOP)?.fg, "black");
-    assert.equal(screen.at(4, 5 + MAP_TOP)?.bg, "yellow");
+    assert.equal(screen.mapAt(3, 5)?.reverse, true);
+    assert.equal(screen.mapAt(5, 5)?.reverse, true);
+    assert.equal(screen.mapAt(4, 5)?.fg, "black");
+    assert.equal(screen.mapAt(4, 5)?.bg, "yellow");
 
     // The next step moves the edge past the glyph, which stays covered.
     visualMove(S, 1, 0);
@@ -3571,13 +3572,13 @@ describe("corruption tint", () => {
       events: [],
     });
     paintCell(S, screen, 1, 1);
-    assert.deepEqual(screen.at(1, 1 + MAP_TOP), {
+    assert.deepEqual(screen.mapAt(1, 1), {
       ch: "#",
       ...STYLE_WALL_CORRUPT_RAMP[2],
     }); // six alive
     attack(S, crew[0]!); // six bodies down to five crosses into the 2-5 band
     paintCell(S, screen, 1, 1);
-    assert.deepEqual(screen.at(1, 1 + MAP_TOP), {
+    assert.deepEqual(screen.mapAt(1, 1), {
       ch: "#",
       ...STYLE_WALL_CORRUPT_RAMP[1],
     });
@@ -3752,7 +3753,7 @@ describe("corruption tint", () => {
       depth: BOSS_DEPTH,
     });
     game.onKey("y"); // dismiss the arrival popup
-    const at = (x: number, y: number) => screen.at(x, y + MAP_TOP);
+    const at = (x: number, y: number) => screen.mapAt(x, y);
     // A left-border cell that is in sight on arrival and flickers on turn 2
     // (arrival is turn 0, then `l` and `h` bring us back at turn 2). The
     // border never leaves sight, and the move repaint never touches it, so
@@ -3801,7 +3802,7 @@ describe("corruption tint", () => {
 
   it("cools the walls and announces the all-clear on the killing blow", () => {
     const { game, screen } = bootGame(); // the arena: one snake, border walls in sight
-    const wall = () => screen.at(40, 0 + MAP_TOP);
+    const wall = () => screen.mapAt(40, 0);
     assert.deepEqual(wall(), { ch: "#", ...STYLE_WALL_CORRUPT_RAMP[0] });
     game.onKey("l".repeat(10)); // the kill cools the room at once
     assert.deepEqual(wall(), { ch: "#", ...STYLE_WALL_CLEAN });
@@ -3976,10 +3977,10 @@ describe("the GIL-less dev preview", () => {
     screen.begin();
     const lvl = buildLevel(2, { baseSeed: 7 });
     paintElevatorFrame(screen, lvl.walls, ELEVATOR_POS);
-    const shaft = screen.at(ELEVATOR_POS.x, ELEVATOR_POS.y + MAP_TOP);
+    const shaft = screen.mapAt(ELEVATOR_POS.x, ELEVATOR_POS.y);
     assert.deepEqual(shaft, { ch: "=", ...STYLE_STAIRS });
     // A floor cell shows a dot in reverse; a wall shows a hash in reverse.
-    assert.deepEqual(screen.at(1, 1 + MAP_TOP), {
+    assert.deepEqual(screen.mapAt(1, 1), {
       ch: gridHas(lvl.walls, 1, 1) ? "#" : ".",
       reverse: true,
     });
@@ -4109,12 +4110,12 @@ describe("the GIL-less dev preview", () => {
     // The boss already paints reversed, so a second reverse would leave it
     // looking exactly like the unselected boss. The cursor uses the accent.
     drawCursor(S, screen);
-    assert.deepEqual(screen.at(5, 5 + MAP_TOP), {
+    assert.deepEqual(screen.mapAt(5, 5), {
       ch: "S",
       fg: "black",
       bg: "yellow",
     });
-    assert.notDeepEqual(screen.at(5, 5 + MAP_TOP), {
+    assert.notDeepEqual(screen.mapAt(5, 5), {
       ch: "S",
       ...bossColor(),
     });
@@ -4136,14 +4137,14 @@ describe("the GIL-less dev preview", () => {
       visible: gridFromKeys(["6,5"]),
     });
     drawCursor(S2, screen);
-    assert.deepEqual(screen.at(6, 5 + MAP_TOP), {
+    assert.deepEqual(screen.mapAt(6, 5), {
       ch: "S",
       fg: "red",
       reverse: true,
     });
     // Repainting restores the boss's own reversed paint.
     paintCell(S, screen, 5, 5);
-    assert.deepEqual(screen.at(5, 5 + MAP_TOP), {
+    assert.deepEqual(screen.mapAt(5, 5), {
       ch: "S",
       ...bossColor(),
     });
@@ -4503,7 +4504,7 @@ describe("visual motions", () => {
       before,
     );
     render(S, screen);
-    assert.equal(screen.at(3, 6 + MAP_TOP)?.bg, "yellow");
+    assert.equal(screen.mapAt(3, 6)?.bg, "yellow");
   });
 
   it("slides the corner to the other end of its row with O", () => {
@@ -4523,7 +4524,7 @@ describe("visual motions", () => {
       [3, 4, 5, 6],
     );
     render(S, screen);
-    assert.equal(screen.at(3, 4 + MAP_TOP)?.bg, "yellow");
+    assert.equal(screen.mapAt(3, 4)?.bg, "yellow");
   });
 });
 
@@ -4536,7 +4537,23 @@ describe("headless game", () => {
     assert.equal(s.hp, 16);
     assert.equal(plain(s.message), "Press ? for help.");
     assert.deepEqual(s.player, { x: 40, y: 10 });
-    assert.equal(screen.at(40, 10 + MAP_TOP)?.ch, "@");
+    assert.equal(screen.mapAt(40, 10)?.ch, "@");
+  });
+
+  it("paints a gutter of relative lines and the absolute depth line", () => {
+    const { screen } = bootGame();
+    // The player's own row is absolute; every other map row is relative.
+    assert.equal(screen.row(MAP_TOP + 10).slice(0, GUTTER_W), " 11 ");
+    assert.equal(screen.row(MAP_TOP + 9).slice(0, GUTTER_W), "  1 ");
+    assert.equal(screen.row(0).slice(0, GUTTER_W), "~   ");
+
+    // Numbering continues across levels: depth 2 starts at line 22.
+    const S = makeState({ depth: 2, player: { x: 40, y: 10 } });
+    const deep = new VirtualScreen();
+    deep.begin();
+    render(S, deep);
+    assert.equal(deep.row(MAP_TOP + 10).slice(0, GUTTER_W), " 32 ");
+    assert.equal(deep.row(MAP_TOP + 9).slice(0, GUTTER_W), "  1 ");
   });
 
   it("moves east one cell and one turn", () => {
@@ -4546,8 +4563,8 @@ describe("headless game", () => {
     assert.deepEqual(s.player, { x: 41, y: 10 });
     assert.equal(s.turns, 1);
     assert.equal(plain(s.message), "");
-    assert.equal(screen.at(41, 10 + MAP_TOP)?.ch, "@");
-    assert.notEqual(screen.at(40, 10 + MAP_TOP)?.ch, "@");
+    assert.equal(screen.mapAt(41, 10)?.ch, "@");
+    assert.notEqual(screen.mapAt(40, 10)?.ch, "@");
   });
 
   it("bumps the north wall without spending turns", () => {
@@ -4831,7 +4848,7 @@ describe("headless game", () => {
     }
     const after = snapshot(game);
     assert.equal(after.player.x, before.player.x - 1);
-    assert.equal(screen.at(after.player.x, after.player.y + MAP_TOP)?.ch, "@");
+    assert.equal(screen.mapAt(after.player.x, after.player.y)?.ch, "@");
   });
 
   it("repeats a single shot by re-aiming at the nearest enemy", async () => {
@@ -4931,15 +4948,31 @@ describe("headless game", () => {
   it("leaves a blank margin around a menu panel below the message", () => {
     const { game, screen } = bootGame();
     game.onKey("?");
-    assert.ok(screen.row(0).startsWith("Press ? for help."));
+    assert.ok(screen.contentRow(0).startsWith("Press ? for help."));
     // The panel starts two rows down; the row above and sides stay blank.
-    assert.equal(screen.row(1).slice(38).trim(), "");
-    assert.equal(screen.row(2)[38], " ");
-    assert.ok(
-      screen.row(2).slice(39).startsWith("What do you want help with?"),
+    // The panel is right-aligned, so it follows the wider screen by GUTTER_W.
+    assert.equal(
+      screen
+        .row(1)
+        .slice(38 + GUTTER_W)
+        .trim(),
+      "",
     );
-    assert.equal(screen.row(2)[79], " ");
-    assert.equal(screen.row(8).slice(38).trim(), "");
+    assert.equal(screen.row(2)[38 + GUTTER_W], " ");
+    assert.ok(
+      screen
+        .row(2)
+        .slice(39 + GUTTER_W)
+        .startsWith("What do you want help with?"),
+    );
+    assert.equal(screen.row(2)[79 + GUTTER_W], " ");
+    assert.equal(
+      screen
+        .row(8)
+        .slice(38 + GUTTER_W)
+        .trim(),
+      "",
+    );
   });
 
   it("repaints clobbered map cells after panel and pager close", () => {
@@ -4959,7 +4992,7 @@ describe("headless game", () => {
       screen.updates.length > paged,
       "pager close re-emitted map cells",
     );
-    assert.equal(screen.at(40, 10 + MAP_TOP)?.ch, "@");
+    assert.equal(screen.mapAt(40, 10)?.ch, "@");
   });
 
   it("repaints only changed cells on a step", () => {
@@ -5135,7 +5168,7 @@ describe("headless game", () => {
       // The tracer's first step has landed; the other recorded cells must
       // still carry the reversed visual selection behind it.
       assert.ok(
-        cells.some((c) => screenRef?.at(c.x, c.y + MAP_TOP)?.reverse === true),
+        cells.some((c) => screenRef?.mapAt(c.x, c.y)?.reverse === true),
         "the repeated block is highlighted under the tracer",
       );
     };

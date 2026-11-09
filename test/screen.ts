@@ -15,6 +15,12 @@ import {
   type RichText,
   type Span,
 } from "../src/ui/style.ts";
+import {
+  GUTTER_W,
+  MAP_TOP,
+  SCREEN_ROWS,
+  SCREEN_WIDTH,
+} from "../src/ui/theme.ts";
 
 /**
  * Minimal terminal emulator: cursor positioning, SGR state, text grid.
@@ -24,8 +30,8 @@ import {
  * screen clears the grid and SGR state; leaving it freezes the frame
  * (the goodbye that follows belongs to the main screen, not the game).
  *
- * 25x80 by default: the message row, 21 map rows, and three footer rows
- * (status, dungeon, command tally).
+ * 25x84 by default: the Vim gutter, the message row, 21 map rows, and three
+ * footer rows (status, dungeon, command tally).
  */
 export class TerminalEmulator {
   /** Visible character cells, row-major. */
@@ -46,7 +52,7 @@ export class TerminalEmulator {
   private readonly height: number;
 
   /** Create an emulator with a blank grid of the given size. */
-  constructor(width = 80, height = 25) {
+  constructor(width = SCREEN_WIDTH, height = SCREEN_ROWS) {
     this.width = width;
     this.height = height;
     this.grid = Array.from({ length: height }, () =>
@@ -147,6 +153,11 @@ export class TerminalEmulator {
     return this.grid[i]?.join("") ?? "";
   }
 
+  /** One visible row with the Vim gutter removed. */
+  contentRow(i: number): string {
+    return this.row(i).slice(GUTTER_W);
+  }
+
   /** SGR parameters active at one visible cell. */
   styleAt(x: number, y: number): string {
     return this.styles[y]?.[x] ?? "";
@@ -229,6 +240,11 @@ export class VirtualScreen implements Screen {
     return this.cells.get(`${x},${y}`)?.ch;
   }
 
+  /** Last structured cell written at map coords, if any. */
+  mapAt(x: number, y: number): Cell | undefined {
+    return this.at(x + GUTTER_W, y + MAP_TOP);
+  }
+
   /** Last styled row written at terminal coords, if any. */
   spansAt(y: number): readonly Span[] | undefined {
     return [...this.textRuns].reverse().find((t) => t.y === y)?.spans;
@@ -247,5 +263,10 @@ export class VirtualScreen implements Screen {
   /** One visible row of the emulated frame, 0-based. */
   row(i: number): string {
     return this.term.row(i);
+  }
+
+  /** One visible row of the emulated frame with the Vim gutter removed. */
+  contentRow(i: number): string {
+    return this.term.contentRow(i);
   }
 }

@@ -19,6 +19,7 @@ import { SHOTGUN_DMG } from "../src/player/items.ts";
 import { TITLE_TAGLINE } from "../src/content.ts";
 import { BOSS_DEPTH } from "../src/world/depth.ts";
 import { startingKit } from "../src/player/progression.ts";
+import { GUTTER_W } from "../src/ui/theme.ts";
 
 const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const GAME = path.join(ROOT, "src", "main.ts");
@@ -290,7 +291,7 @@ describe("hacker-fables e2e", { concurrency: true }, () => {
       "\x03",
     ]);
     const frame = screenOf(output);
-    assert.ok(frame[0]!.startsWith("Press ? for help."));
+    assert.ok(frame[0]!.slice(GUTTER_W).startsWith("Press ? for help."));
     assert.equal(frame.join("\n").includes("Quit this run?"), false);
   });
 

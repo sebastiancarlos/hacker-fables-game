@@ -233,7 +233,7 @@ The default Vim Mode, shown in play, Target Mode, and Look Mode when no Shell is
 _Avoid_: Command mode, default mode
 
 **INSERT BULLET**:
-The Vim Mode shown in play while one Shell is chambered and ready to fire.
+The Vim Mode entered by pressing `i`. It chambers a Shell when one is available. Target Mode and Visual Block require a loaded Shell and return to INSERT BULLET on Esc; firing spends the Shell and leaves the stance.
 _Avoid_: Insert mode, loaded mode
 
 **VISUAL BLOCK**:
