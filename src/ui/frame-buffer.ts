@@ -8,7 +8,7 @@
  * canvas, or a DOM front end can use the same diff.
  */
 import { fitSpans, type Cell, type CellStyle, type RichText } from "./style.ts";
-import { SCREEN_ROWS, WIDTH } from "./theme.ts";
+import { SCREEN_ROWS, SCREEN_WIDTH } from "./theme.ts";
 
 /** One maximal run of changed cells on a row; `end` is exclusive. */
 export interface FrameRun {
@@ -79,8 +79,8 @@ export class FrameBuffer {
   /** Style-key to style-id map. */
   private readonly styleIds = new Map<string, number>([[styleKey({}), 0]]);
 
-  /** Create a buffer, defaulting to the game's 80x25 terminal. */
-  constructor(width = WIDTH, height = SCREEN_ROWS) {
+  /** Create a buffer, defaulting to the game's 84x25 terminal. */
+  constructor(width = SCREEN_WIDTH, height = SCREEN_ROWS) {
     this.width = width;
     this.height = height;
     this.size = width * height;

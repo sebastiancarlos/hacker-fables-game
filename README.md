@@ -48,7 +48,7 @@ between releases. Feel free to open issues for bugs or feature requests.
 ## Requirements
 
 - Node.js 24 or newer
-- A terminal with at least 80x25 (ubiquitous since the 1960s), or a web
+- A terminal with at least 84x25 (ubiquitous since the 1960s), or a web
   browser
 
 ## Play in the terminal

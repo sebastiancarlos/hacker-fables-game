@@ -19,7 +19,7 @@ declare global {
 import { AnsiScreen } from "./platform/terminal/ansi-screen.ts";
 import { Game } from "./game/game.ts";
 import { decodeInput } from "./platform/terminal/input.ts";
-import { SCREEN_ROWS, WIDTH } from "./ui/theme.ts";
+import { SCREEN_ROWS, SCREEN_WIDTH } from "./ui/theme.ts";
 import {
   appendScore,
   createWebTerminal,
@@ -46,9 +46,9 @@ if (container === null) {
   throw new Error("missing #terminal element");
 }
 
-/** xterm.js terminal, fixed to the game's 80x25 grid. */
+/** xterm.js terminal, fixed to the game's 84x25 grid. */
 const term = new Terminal({
-  cols: WIDTH,
+  cols: SCREEN_WIDTH,
   rows: SCREEN_ROWS,
   scrollback: 0,
   cursorBlink: true,
@@ -66,7 +66,7 @@ function focusTerminal(): void {
 focusTerminal();
 requestAnimationFrame(focusTerminal);
 
-/** Size the 80x25 grid's font to fill available viewport space. */
+/** Size the 84x25 grid's font to fill available viewport space. */
 function fitTerminal(): void {
   const element = container as HTMLElement;
   let low = 8;
@@ -114,7 +114,7 @@ const screen = new AnsiScreen(
   (s: string) => {
     term.write(s);
   },
-  WIDTH,
+  SCREEN_WIDTH,
   SCREEN_ROWS,
 );
 const quitRef = { current: () => window.location.reload() };

@@ -9,7 +9,7 @@ import { xpNext } from "../player/progression.ts";
 import { isWeapon } from "../player/items.ts";
 import { fitRich, fitRow, visibleLength, wrapText } from "./text.ts";
 import type { Enemy } from "../world/map.ts";
-import { HEIGHT, WIDTH } from "./theme.ts";
+import { GUTTER_W, HEIGHT, SCREEN_WIDTH, WIDTH } from "./theme.ts";
 import { gridHas, type Grid } from "../world/grid.ts";
 import { LORE_LINES, UI } from "../content.ts";
 import {
@@ -52,6 +52,7 @@ import {
   PANEL_TOP,
   PANEL_W,
   STYLE_CURSOR,
+  STYLE_GUTTER,
   STYLE_REVERSE,
   STYLE_VISUAL_CORNER,
   SCREEN_ROWS,
@@ -100,7 +101,7 @@ export function putCell(
   } else {
     delete out.reverse;
   }
-  screen.cell(x, y + MAP_TOP, out);
+  screen.cell(x + GUTTER_W, y + MAP_TOP, out);
 }
 
 /** The glyph and style a map cell shows, or null when still unexplored. */
@@ -194,7 +195,7 @@ export function paintElevatorFrame(screen: Screen, walls: Grid, at: Vec): void {
 
 /** Rewrite only the top message line, measured in visible cells. */
 function paintMessage(S: GameState, screen: Screen): void {
-  screen.text(0, 0, fitRich(S.ui.message, WIDTH), WIDTH);
+  screen.text(GUTTER_W, 0, fitRich(S.ui.message, WIDTH), WIDTH);
 }
 
 /** Rewrite the status line. */
@@ -240,7 +241,7 @@ export function paintStatus(S: GameState, screen: Screen): void {
       .slice(0, WIDTH - 32 - pillText.length),
   });
   line.push({ text: pillText, ...pillStyle });
-  screen.text(0, STATUS_ROW, line, WIDTH);
+  screen.text(GUTTER_W, STATUS_ROW, line, WIDTH);
 }
 
 /**
@@ -257,13 +258,13 @@ function paintDungeonLine(S: GameState, screen: Screen): void {
       row = row.slice(0, WIDTH - echo.length) + echo;
     }
   }
-  screen.text(0, DUNGEON_ROW, row, WIDTH);
+  screen.text(GUTTER_W, DUNGEON_ROW, row, WIDTH);
 }
 
 /** Vim command line: the count and the most recent commands. */
 function paintCommandsLine(S: GameState, screen: Screen): void {
   screen.text(
-    0,
+    GUTTER_W,
     COMMAND_ROW,
     fitRow(commandLine(S.meta.commands, S.ui.commandMark, WIDTH), WIDTH),
     WIDTH,
@@ -275,7 +276,7 @@ function paintCommandsLine(S: GameState, screen: Screen): void {
  * place of the vim tally.
  */
 export function paintPlaybackControls(screen: Screen): void {
-  screen.text(0, COMMAND_ROW, fitRow(UI.replayControls, WIDTH), WIDTH);
+  screen.text(GUTTER_W, COMMAND_ROW, fitRow(UI.replayControls, WIDTH), WIDTH);
 }
 
 /**
@@ -289,7 +290,7 @@ function paintTargetStatus(S: GameState, screen: Screen): void {
       healthLabel(enemyName(s.kind, s.version), s.hp, s.maxHp),
       ` ${UI.targetHint(s.hp, s.maxHp)}`,
     );
-    screen.text(0, DUNGEON_ROW, fitRich(line, WIDTH), WIDTH);
+    screen.text(GUTTER_W, DUNGEON_ROW, fitRich(line, WIDTH), WIDTH);
     return;
   }
   paintDungeonLine(S, screen);
@@ -303,9 +304,14 @@ function paintCenteredScreen(screen: Screen, lines: readonly RichText[]): void {
   const top = Math.max(0, Math.floor((SCREEN_ROWS - lines.length) / 2));
   for (let y = 0; y < SCREEN_ROWS; y++) {
     const text = y >= top && y - top < lines.length ? lines[y - top]! : "";
-    const vis = Math.min(textWidth(text), WIDTH);
-    const pad = Math.max(0, Math.floor((WIDTH - vis) / 2));
-    screen.text(0, y, fitRich(spans(" ".repeat(pad), text), WIDTH), WIDTH);
+    const vis = Math.min(textWidth(text), SCREEN_WIDTH);
+    const pad = Math.max(0, Math.floor((SCREEN_WIDTH - vis) / 2));
+    screen.text(
+      0,
+      y,
+      fitRich(spans(" ".repeat(pad), text), SCREEN_WIDTH),
+      SCREEN_WIDTH,
+    );
   }
 }
 
@@ -382,7 +388,7 @@ function clearPanelMargin(
   height: number,
 ): void {
   const left = Math.max(0, x - PANEL_MARGIN);
-  const right = Math.min(WIDTH, x + width + PANEL_MARGIN);
+  const right = Math.min(SCREEN_WIDTH, x + width + PANEL_MARGIN);
   const span = " ".repeat(right - left);
   if (y - PANEL_MARGIN >= 0) {
     screen.text(left, y - PANEL_MARGIN, span, span.length);
@@ -409,7 +415,7 @@ function paintPanel(
   pageRows: number,
 ): void {
   // Leave one blank column at each edge, so the margin always fits.
-  const geo = panelGeometry(rows, PANEL_W, WIDTH - PANEL_MARGIN * 2);
+  const geo = panelGeometry(rows, PANEL_W, SCREEN_WIDTH - PANEL_MARGIN * 2);
   const x = geo.x + PANEL_MARGIN;
   const maxRows = Math.min(
     pageRows + 1,
@@ -442,10 +448,10 @@ function paintPagerLine(
   y: number,
   text: string,
 ): void {
-  const plain = text.padEnd(WIDTH).slice(0, WIDTH);
+  const plain = text.padEnd(SCREEN_WIDTH).slice(0, SCREEN_WIDTH);
   const q = p.query;
   if (q === null || q === "") {
-    screen.text(0, y, linkify(plain), WIDTH);
+    screen.text(0, y, linkify(plain), SCREEN_WIDTH);
     return;
   }
   const at: number[] = [];
@@ -471,7 +477,7 @@ function paintPagerLine(
   if (last < plain.length) {
     line.push({ text: plain.slice(last) });
   }
-  screen.text(0, y, linkify(line), WIDTH);
+  screen.text(0, y, linkify(line), SCREEN_WIDTH);
 }
 
 /** The pager footer: position, percentage, and search state. */
@@ -500,10 +506,12 @@ function paintPager(p: PagerModal, screen: Screen, pageRows: number): void {
     0,
     pageRows,
     spans({
-      text: pagerStatus(p, pageRows).padEnd(WIDTH).slice(0, WIDTH),
+      text: pagerStatus(p, pageRows)
+        .padEnd(SCREEN_WIDTH)
+        .slice(0, SCREEN_WIDTH),
       ...STYLE_REVERSE,
     }),
-    WIDTH,
+    SCREEN_WIDTH,
   );
 }
 
@@ -581,7 +589,33 @@ function paintVisual(S: GameState, screen: Screen): void {
 
 /** Bottom-row help while looking. Restored by the play frame on exit. */
 function paintLookHelp(screen: Screen): void {
-  screen.text(0, DUNGEON_ROW, UI.lookHelp, WIDTH);
+  screen.text(GUTTER_W, DUNGEON_ROW, UI.lookHelp, WIDTH);
+}
+
+/**
+ * Paint the Vim-style left gutter: relative line numbers beside the map and
+ * tildes beside the UI rows. The player's own row shows its absolute line in
+ * the whole dungeon, so numbering continues across levels.
+ */
+function paintGutter(S: GameState, screen: Screen): void {
+  const playerY = S.sim.player.y;
+  const levelOffset = (S.sim.level.depth - 1) * HEIGHT;
+  for (let row = 0; row < SCREEN_ROWS; row++) {
+    const mapY = row - MAP_TOP;
+    if (mapY >= 0 && mapY < HEIGHT) {
+      const current = mapY === playerY;
+      const n = current ? levelOffset + mapY + 1 : Math.abs(mapY - playerY);
+      const text = String(n).padStart(GUTTER_W - 1, " ") + " ";
+      screen.text(0, row, spans({ text, ...STYLE_GUTTER }), GUTTER_W);
+    } else {
+      screen.text(
+        0,
+        row,
+        spans({ text: "~", ...STYLE_GUTTER }, " ".repeat(GUTTER_W - 1)),
+        GUTTER_W,
+      );
+    }
+  }
 }
 
 /**
@@ -597,6 +631,7 @@ function paintFrame(S: GameState, screen: Screen): void {
   paintStatus(S, screen);
   paintDungeonLine(S, screen);
   paintCommandsLine(S, screen);
+  paintGutter(S, screen);
 }
 
 /** Recordings picker: one row per recording, the cursor reversed. */

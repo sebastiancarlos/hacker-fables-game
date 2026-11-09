@@ -13,7 +13,7 @@ import {
   type RichText,
   type Span,
 } from "../../ui/style.ts";
-import { SCREEN_ROWS, WIDTH } from "../../ui/theme.ts";
+import { SCREEN_ROWS, SCREEN_WIDTH } from "../../ui/theme.ts";
 
 /** SGR foreground and background numbers for the base sixteen colors. */
 const BASE_COLORS: Record<string, readonly [number, number]> = {
@@ -140,7 +140,11 @@ export class AnsiScreen implements Screen {
   private parked: { x: number; y: number } | null = null;
 
   /** Create a screen that writes through `emit`. */
-  constructor(emit: (s: string) => void, width = WIDTH, height = SCREEN_ROWS) {
+  constructor(
+    emit: (s: string) => void,
+    width = SCREEN_WIDTH,
+    height = SCREEN_ROWS,
+  ) {
     this.emit = emit;
     this.buffer = new FrameBuffer(width, height);
   }

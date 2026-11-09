@@ -12,6 +12,11 @@ export const WIDTH = 80;
 /** Height of the playfield in cells. */
 export const HEIGHT = 21;
 
+/** Width of the Vim-style left gutter. */
+export const GUTTER_W = 4;
+/** Total terminal width: the map and UI content plus the gutter. */
+export const SCREEN_WIDTH = WIDTH + GUTTER_W;
+
 /** Terminal row where the map starts. */
 export const MAP_TOP = 1;
 /** Terminal row for the status line. */
@@ -70,6 +75,8 @@ export const STYLE_YELLOW: CellStyle = { fg: "yellow" };
 export const STYLE_RED: CellStyle = { fg: "red" };
 /** Reverse video: swap foreground and background for one glyph (hotkeys). */
 export const STYLE_REVERSE: CellStyle = { reverse: true };
+/** Vim-style gutter numbers and tildes. */
+export const STYLE_GUTTER: CellStyle = { fg: "brightBlack" };
 
 /**
  * Heat gradation by Python-version index: 2.x cool green, 3.x yellow to
