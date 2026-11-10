@@ -445,7 +445,7 @@ export const GLITCH_PEAK = 0.1;
 /**
  * The ASCII noise the bottom's walls flicker through.
  */
-export const GLITCH_GLYPHS: readonly string[] = [..."%&*+~^;:/\\|[]{("];
+export const GLITCH_GLYPHS: readonly string[] = [..."%&*+~^:/\\|[]{("];
 
 /**
  * How thick the glitch runs on a floor: zero everywhere except the bottom,

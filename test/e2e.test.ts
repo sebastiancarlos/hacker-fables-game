@@ -363,7 +363,7 @@ describe("hacker-fables e2e", { concurrency: true }, () => {
     assert.match(output, /Hacker Fables is yielding back control of your CPU/);
   });
 
-  it("boots the static bottom: a gun, the boss room, and no way down", async () => {
+  it("boots the static bottom: a shell pile, the boss room, and no way down", async () => {
     // Arriving on the bottom raises its corruption popup; y dismisses it.
     const { output, code } = await runGame(["y" + ">" + "l".repeat(5), "q"], {
       arena: false,
@@ -374,8 +374,8 @@ describe("hacker-fables e2e", { concurrency: true }, () => {
     assert.match(output, new RegExp(`Dlvl:${BOSS_DEPTH} `));
     // The bottom has no down stairs, and `>` says so.
     assert.match(output, /You can't go down here\./);
-    // The lone gun sits five cells east of the arrival stairs.
-    assert.match(output, /You see here a Modal Shotgun\./);
+    // The lone shell pile sits five cells east of the arrival stairs.
+    assert.match(output, /You see here a Pile of Shotgun Shells\./);
     assert.match(output, /Hacker Fables is yielding back control of your CPU/);
   });
 

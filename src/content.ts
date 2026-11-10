@@ -95,17 +95,17 @@ export const COMMANDS_HELP = {
     "surface.",
   ],
   shotgun: [
-    "The Modal Shotgun: Once you find one, grab it with",
-    "the comma key, then chamber shells with i (which",
-    "changes into Vim's INSERT BULLET mode), and aim",
-    "with f. The cursor starts on the nearest enemy, but",
-    "you can move to other targets with your movement",
+    "The Modal Shotgun: You find it on level 1. Grab it",
+    "with the comma key, then chamber shells with i",
+    "(which changes into Vim's INSERT BULLET mode), and",
+    "aim with f. The cursor starts on the nearest enemy,",
+    "but you can move to other targets with your movement",
     'keys (or enter "free aim" mode by pressing o).',
     "Press . (Vim's repeat command) to repeat a",
-    '"chamber, aim and fire" action. Every shotgun',
-    "carries 20 shells. Press , on additional shotguns",
-    "to grab its shells. Your total shells are displayed",
-    'on the status bar under "Ammo".',
+    '"chamber, aim and fire" action. The gun carries 20',
+    "shells. Deeper levels carry shell piles; press , on",
+    "one to add its 20 shells. Your total shells are",
+    'displayed on the status bar under "Ammo".',
   ],
   visual: [
     "VISUAL BLOCK mode: You unlock this at level 2.",
@@ -320,7 +320,7 @@ export const MSG = {
         : "The script finds no snakes in view.",
   pickupScript: (name: string): string => `You pick up the ${name}.`,
   pickupShells: (shells: number): string =>
-    `You pick up ${shells} shells for the Modal Shotgun.`,
+    `You pick up ${shells} shotgun shell${shells === 1 ? "" : "s"}.`,
   pickupGun: (shells: number): string =>
     `You pick up the Modal Shotgun. (${shells} shells.)`,
 
@@ -335,6 +335,8 @@ export const MSG = {
   enemyBite: (bite: number): string =>
     `Bite: ${bite} damage per turn from any adjacent cell.`,
   itemHeader: (name: string): string => `${name}.`,
+  shellPile: (shells: number): string =>
+    `${shells} shotgun shell${shells === 1 ? "" : "s"}.`,
   playerHp: (hp: number, max: number): string => `HP: ${hp}(${max}).`,
   wielding: (name: string): string => `Wielding: ${name}.`,
   emptyHanded: "Empty-handed.",

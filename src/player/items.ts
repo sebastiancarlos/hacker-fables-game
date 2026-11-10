@@ -1,5 +1,5 @@
 /**
- * Items: scripts, the Modal Shotgun, and shot planning.
+ * Items: scripts, the Modal Shotgun, shell piles, and shot planning.
  *
  * `Item` is a discriminated union and `ITEM_KINDS` gives each family its
  * glyph, look-panel rows, and pickup behavior. Scripts identify themselves
@@ -72,8 +72,8 @@ export function shotMessage(
 /** Script effects: v2 deletes visible Python 2, all clears view, heal mends. */
 export type ScriptEffect = "v2" | "all" | "heal";
 
-/** Item families: one carried weapon and the executable scripts. */
-export type ItemKind = "weapon" | "script";
+/** Item families: one carried weapon, the executable scripts, and shells. */
+export type ItemKind = "weapon" | "script" | "shell";
 
 /** The Modal Shotgun. */
 export interface WeaponItem {
@@ -90,8 +90,16 @@ export interface ScriptItem {
   effect: ScriptEffect;
 }
 
+/** A pile of shells lying on the floor; picking it up feeds the reserve. */
+export interface ShellItem {
+  kind: "shell";
+  name: string;
+  glyph: ";";
+  count: number;
+}
+
 /** Anything the player can carry or find on the floor. */
-export type Item = WeaponItem | ScriptItem;
+export type Item = WeaponItem | ScriptItem | ShellItem;
 
 /** Narrow an item to the gun, including a missing item. */
 export function isWeapon(item: Item | null | undefined): item is WeaponItem {
@@ -101,6 +109,11 @@ export function isWeapon(item: Item | null | undefined): item is WeaponItem {
 /** Narrow an item to a script, including a missing item. */
 export function isScript(item: Item | null | undefined): item is ScriptItem {
   return item?.kind === "script";
+}
+
+/** Narrow an item to a shell pile, including a missing item. */
+export function isShell(item: Item | null | undefined): item is ShellItem {
+  return item?.kind === "shell";
 }
 
 /** What a pickup does besides removing the item from the floor. */
@@ -122,10 +135,14 @@ export interface ItemKindSpec<T extends Item> {
 /** Damage one shell deals, at any range. */
 export const SHOTGUN_DMG = 6;
 
+/** Shells bundled with every Modal Shotgun pickup and shell pile. */
+export const SHELLS_PER_GUN = 20;
+
 /** Every item family's behavior in one table, like ENEMY_KINDS. */
 export const ITEM_KINDS: {
   weapon: ItemKindSpec<WeaponItem>;
   script: ItemKindSpec<ScriptItem>;
+  shell: ItemKindSpec<ShellItem>;
 } = {
   weapon: {
     glyph: ")",
@@ -153,6 +170,15 @@ export const ITEM_KINDS: {
       message: MSG.pickupScript(item.name),
     }),
   },
+  shell: {
+    glyph: ";",
+    details: (item) => [MSG.shellPile(item.count)],
+    pickup: (item, S) => ({
+      carried: false,
+      shells: S.sim.shells + item.count,
+      message: MSG.pickupShells(item.count),
+    }),
+  },
 };
 
 /** A script as a ground or inventory item spec. */
@@ -174,6 +200,16 @@ export function shotgunSpec(): WeaponItem {
   };
 }
 
+/** A pile of shells as a ground item spec. */
+export function shellSpec(count: number = SHELLS_PER_GUN): ShellItem {
+  return {
+    name: "Pile of Shotgun Shells",
+    glyph: ITEM_KINDS.shell.glyph,
+    kind: "shell",
+    count,
+  };
+}
+
 /** True when the player already carries or wields a gun. */
 function hasWeapon(S: GameState): boolean {
   return isWeapon(S.sim.wielded) || S.sim.inventory.some(isWeapon);
@@ -181,16 +217,26 @@ function hasWeapon(S: GameState): boolean {
 
 /** The look-panel rows for an item, from its family's table. */
 export function itemDetails(item: Item, equipped: boolean): string[] {
-  return item.kind === "weapon"
-    ? ITEM_KINDS.weapon.details(item, equipped)
-    : ITEM_KINDS.script.details(item, equipped);
+  switch (item.kind) {
+    case "weapon":
+      return ITEM_KINDS.weapon.details(item, equipped);
+    case "script":
+      return ITEM_KINDS.script.details(item, equipped);
+    case "shell":
+      return ITEM_KINDS.shell.details(item, equipped);
+  }
 }
 
 /** Apply an item's pickup behavior, from its family's table. */
 export function itemPickup(item: Item, S: GameState): PickupPlan {
-  return item.kind === "weapon"
-    ? ITEM_KINDS.weapon.pickup(item, S)
-    : ITEM_KINDS.script.pickup(item, S);
+  switch (item.kind) {
+    case "weapon":
+      return ITEM_KINDS.weapon.pickup(item, S);
+    case "script":
+      return ITEM_KINDS.script.pickup(item, S);
+    case "shell":
+      return ITEM_KINDS.shell.pickup(item, S);
+  }
 }
 
 /** Carried scripts of one effect, with their display name. */
@@ -255,9 +301,6 @@ export function scriptMessage(effect: ScriptEffect, kills: number): string {
   }
   return effect === "v2" ? MSG.scriptV2(kills) : MSG.scriptAll(kills);
 }
-
-/** Shells bundled with every Modal Shotgun pickup. */
-export const SHELLS_PER_GUN = 20;
 
 /** Result of picking up a shotgun: reserve shells and whether it is kept. */
 export interface ShellPickup {

@@ -165,7 +165,7 @@ The Weapon currently equipped by the Player.
 _Avoid_: Active weapon, held weapon
 
 **Shells**:
-The reserve ammunition for the Modal Shotgun.
+The reserve ammunition for the Modal Shotgun, gathered from Shell Piles.
 _Avoid_: Ammo, bullets, rounds
 
 **Loaded**:
@@ -175,15 +175,19 @@ _Avoid_: Chambered, ready
 ### Items and Combat
 
 **Item**:
-Anything the Player can pick up: a Weapon or a Script.
+Anything the Player can pick up: a Weapon, a Script, or a Shell Pile. Only a Weapon or Script joins the Inventory; a Shell Pile is consumed into Shells.
 _Avoid_: Object, pickup
+
+**Shell Pile**:
+A Ground Item of 20 Shells on every Level below the Top Level. Picking it up adds the Shells to the reserve.
+_Avoid_: Ammo box, ammo drop
 
 **Weapon**:
 A pickable Item that fires Shells; currently only the Modal Shotgun.
 _Avoid_: Gun, firearm
 
 **Modal Shotgun**:
-The game's only Weapon, a shotgun whose shells are aimed and fired through Vim Modes.
+The game's only Weapon, found on the Top Level. Its shells are aimed and fired through Vim Modes.
 _Avoid_: Gun, generic shotgun
 
 **Script**:

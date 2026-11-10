@@ -86,12 +86,15 @@ import { BOSS_DEPTH, steps, VISUAL_UNLOCK_LEVEL } from "../src/world/depth.ts";
 import {
   chooseShots,
   groupScripts,
+  itemPickup,
   nearestReachableTarget,
   scriptMessage,
   scriptSpec,
   scriptTargets,
+  shellSpec,
   shotgunPickup,
   shotgunSpec,
+  SHELLS_PER_GUN,
   SHOTGUN_DMG,
   shotMessage,
 } from "../src/player/items.ts";
@@ -109,10 +112,10 @@ import {
   bossArtRows,
   ELEVATOR_POS,
   EXTRA_LOOT_DEPTH,
-  gunsForDepth,
   scrollsForDepth,
-  SECOND_GUN_DEPTH,
+  SECOND_SHELL_DEPTH,
   SCRIPT_DROP_DEPTH,
+  shellPilesForDepth,
   type Enemy,
   type Level,
 } from "../src/world/map.ts";
@@ -494,7 +497,16 @@ describe("rules", () => {
     const second = shotgunPickup(true, first.shells);
     assert.equal(second.shells, 40);
     assert.equal(second.takeGun, false);
-    assert.match(plain(second.message), /20 shells/);
+    assert.match(plain(second.message), /20 shotgun shells/);
+  });
+
+  it("picks up a shell pile into the reserve", () => {
+    const S = makeState({ shells: 5 });
+    const plan = itemPickup(shellSpec(), S);
+    assert.equal(plan.carried, false);
+    assert.equal(plan.shells, 5 + SHELLS_PER_GUN);
+    assert.match(plain(plan.message), /20 shotgun shells/);
+    assert.equal(shellSpec().glyph, ";");
   });
 
   it("spends visual shots nearest-first within shells", () => {
@@ -1906,6 +1918,27 @@ describe("modal stack", () => {
     const text = rows.map((row) => row.text).join(" ");
     assert.ok(text.includes(MSG.gunFlavor));
     assert.ok(rows.some((row) => row.text === MSG.gunDamage(SHOTGUN_DMG)));
+  });
+
+  it("shows a shell pile's details", () => {
+    const S = makeState({
+      mode: "look",
+      ground: [{ item: shellSpec(), x: 5, y: 5 }],
+    });
+    showDetailsFor(S, { x: 5, y: 5 });
+    const rows = currentMenu(S.ui)!.rows;
+    assert.ok(
+      rows.some((row) => row.text === MSG.itemHeader("Pile of Shotgun Shells")),
+    );
+    assert.ok(rows.some((row) => row.text === MSG.shellPile(SHELLS_PER_GUN)));
+  });
+
+  it("renders a shell pile as a cyan semicolon", () => {
+    const S = makeState({
+      omniscient: true,
+      ground: [{ item: shellSpec(), x: 5, y: 5 }],
+    });
+    assert.deepEqual(cellSpec(S, 5, 5), { ch: ";", fg: "cyan" });
   });
 
   it("returns from a confirm popup to play", () => {
@@ -3680,7 +3713,7 @@ describe("corruption tint", () => {
     assert.ok(seen.size > 4, "the shimmer should use several glyphs");
     for (const glyph of seen) {
       assert.ok(GLITCH_GLYPHS.includes(glyph));
-      assert.equal("#.@?<>= )".includes(glyph), false);
+      assert.equal("#.@?<>= );".includes(glyph), false);
     }
   });
 
@@ -4219,8 +4252,9 @@ describe("the GIL-less dev preview", () => {
     for (const row of bossArtRows()) {
       assert.equal(row.length, WIDTH);
     }
-    // Loot: one gun and two healing scripts, all on reachable floor.
-    assert.equal(lvl.ground.filter((g) => g.item.kind === "weapon").length, 1);
+    // Loot: one shell pile and two healing scripts, all on reachable floor.
+    assert.equal(lvl.ground.filter((g) => g.item.kind === "weapon").length, 0);
+    assert.equal(lvl.ground.filter((g) => g.item.kind === "shell").length, 1);
     assert.equal(lvl.ground.filter((g) => g.item.kind === "script").length, 2);
   });
 
@@ -4690,30 +4724,55 @@ describe("headless game", () => {
     assert.ok(healAmounts.every((a) => a > 0));
   });
 
-  it("places extra shotguns at their milestones", () => {
+  it("places the shotgun on the top level and shell piles deeper", () => {
     // The table drives both the count and the placed loot.
-    assert.equal(gunsForDepth(SECOND_GUN_DEPTH - 1), 1);
-    assert.equal(gunsForDepth(SECOND_GUN_DEPTH), 2);
-    assert.equal(gunsForDepth(EXTRA_LOOT_DEPTH - 1), 2);
-    assert.equal(gunsForDepth(EXTRA_LOOT_DEPTH), 3);
+    assert.equal(shellPilesForDepth(1), 0);
+    assert.equal(shellPilesForDepth(2), 1);
+    assert.equal(shellPilesForDepth(SECOND_SHELL_DEPTH - 1), 1);
+    assert.equal(shellPilesForDepth(SECOND_SHELL_DEPTH), 2);
+    assert.equal(shellPilesForDepth(EXTRA_LOOT_DEPTH - 1), 2);
+    assert.equal(shellPilesForDepth(EXTRA_LOOT_DEPTH), 3);
+    const level1 = snapshot(bootGame({ arena: false, seed: 7 }).game);
     const shallow = snapshot(
       bootGame({
         arena: false,
         seed: 7,
-        depth: SECOND_GUN_DEPTH - 1,
+        depth: SECOND_SHELL_DEPTH - 1,
       }).game,
     );
     const second = snapshot(
-      bootGame({ arena: false, seed: 7, depth: SECOND_GUN_DEPTH }).game,
+      bootGame({ arena: false, seed: 7, depth: SECOND_SHELL_DEPTH }).game,
     );
     const third = snapshot(
       bootGame({ arena: false, seed: 7, depth: EXTRA_LOOT_DEPTH }).game,
     );
-    const guns = (s: typeof shallow): number =>
+    const guns = (s: typeof level1): number =>
       s.items.filter((i) => i.name === "Modal Shotgun").length;
-    assert.equal(guns(shallow), 1);
-    assert.equal(guns(second), 2);
-    assert.equal(guns(third), 3);
+    const piles = (s: typeof level1): number =>
+      s.items.filter((i) => i.name === "Pile of Shotgun Shells").length;
+    assert.equal(guns(level1), 1);
+    assert.equal(piles(level1), 0);
+    assert.equal(guns(shallow), 0);
+    assert.equal(piles(shallow), 1);
+    assert.equal(guns(second), 0);
+    assert.equal(piles(second), 2);
+    assert.equal(guns(third), 0);
+    assert.equal(piles(third), 3);
+  });
+
+  it("keeps the shotgun on the top level and shells below", () => {
+    for (let depth = 1; depth <= BOSS_DEPTH; depth++) {
+      const lvl = buildLevel(depth, { baseSeed: 7 });
+      const guns = lvl.ground.filter((g) => g.item.kind === "weapon").length;
+      const shells = lvl.ground.filter((g) => g.item.kind === "shell").length;
+      if (depth === 1) {
+        assert.equal(guns, 1);
+        assert.equal(shells, 0);
+      } else {
+        assert.equal(guns, 0, `depth ${depth} should not carry a shotgun`);
+        assert.ok(shells > 0, `depth ${depth} should carry shells`);
+      }
+    }
   });
 
   it("holds step values between milestones", () => {

@@ -23,6 +23,7 @@ import { BOSS_DEPTH, steps } from "./depth.ts";
 import { chebyshev, nearestFreeCell, type Vec } from "./geometry.ts";
 import {
   scriptSpec,
+  shellSpec,
   shotgunSpec,
   type Item,
   type ScriptEffect,
@@ -33,22 +34,23 @@ import { createGrid, gridAdd, gridDelete, gridHas, type Grid } from "./grid.ts";
 /** First depth where a level can drop a script. */
 export const SCRIPT_DROP_DEPTH = Math.ceil(BOSS_DEPTH * 0.4);
 
-/** First depth where a level carries a second shotgun. */
-export const SECOND_GUN_DEPTH = Math.ceil(BOSS_DEPTH * 0.6);
+/** First depth where a level carries a second shell pile. */
+export const SECOND_SHELL_DEPTH = Math.ceil(BOSS_DEPTH * 0.6);
 
-/** First depth where a level carries an extra shotgun and script. */
+/** First depth where a level carries an extra shell pile and script. */
 export const EXTRA_LOOT_DEPTH = 11;
 
-/** Shotguns placed on a level, by depth. Later guns are ammo pickups. */
-const GUNS = steps([
-  [1, 1],
-  [SECOND_GUN_DEPTH, 2],
+/** Shell piles placed on a level, by depth. The Top Level carries the gun. */
+const SHELL_PILES = steps([
+  [1, 0],
+  [2, 1],
+  [SECOND_SHELL_DEPTH, 2],
   [EXTRA_LOOT_DEPTH, 3],
 ]);
 
-/** How many shotguns a level carries. */
-export function gunsForDepth(depth: number): number {
-  return GUNS(depth);
+/** How many shell piles a level carries. */
+export function shellPilesForDepth(depth: number): number {
+  return SHELL_PILES(depth);
 }
 
 /** Scripts dropped on a level, by depth. */
@@ -169,7 +171,7 @@ export interface BuildOpts {
  * The last level, hand-authored, same for every seed.
  *
  * Markers include: `@` arrival (also the up stairs), `B` the boss,
- * `s` the guards.
+ * `s` the guards, `;` shell piles, and `?` healing scripts.
  */
 const BOSS_ART: string[] = [
   "################################################################################",
@@ -182,7 +184,7 @@ const BOSS_ART: string[] = [
   "#.......................##.............................#......##......##.......#",
   "#.......................##.............................#......##......##.......#",
   "#.............................................##.......#.......................#",
-  "#..@....).......................s.............##..........................B....#",
+  "#..@....;.......................s.............##..........................B....#",
   "#......................................................#.......................#",
   "#.......................##.............................#......##......##.......#",
   "#.......................##.............................#......##......##.......#",
@@ -237,8 +239,8 @@ function buildBossLevel(depth: number, width: number, height: number): Level {
         case "s":
           guardSpots.push({ x, y });
           break;
-        case ")":
-          ground.push({ item: shotgunSpec(), x, y });
+        case ";":
+          ground.push({ item: shellSpec(), x, y });
           break;
         case "?":
           ground.push({ item: scriptSpec("heal"), x, y });
@@ -500,7 +502,13 @@ export function buildLevel(depth: number, opts: BuildOpts): Level {
       start: { x: Math.floor(width / 2), y: Math.floor(height / 2) },
       walls: arenaWalls(width, height),
       enemies,
-      ground: [{ item: shotgunSpec(), x: 30, y: 10 }],
+      ground: [
+        {
+          item: depth === 1 ? shotgunSpec() : shellSpec(),
+          x: 30,
+          y: 10,
+        },
+      ],
       explored: createGrid(),
       up: null,
       down: null,
@@ -517,8 +525,8 @@ export function buildLevel(depth: number, opts: BuildOpts): Level {
   const at = (banned: Vec[] = [], near: Vec | null = null, minDist = 0): Vec =>
     randomFloor(rng, walls, banned, near, minDist, width, height);
   const start = at();
-  const gunPos = at([start]);
-  const placed: Vec[] = [start, gunPos];
+  const lootPos = at([start]);
+  const placed: Vec[] = [start, lootPos];
   const enemies: Enemy[] = [];
   let down: Vec;
   let up: Vec | null;
@@ -556,7 +564,9 @@ export function buildLevel(depth: number, opts: BuildOpts): Level {
   });
 
   const loot: GroundItem[] = [
-    { item: shotgunSpec(), x: gunPos.x, y: gunPos.y },
+    depth === 1
+      ? { item: shotgunSpec(), x: lootPos.x, y: lootPos.y }
+      : { item: shellSpec(), x: lootPos.x, y: lootPos.y },
   ];
 
   // Loot draws from its own "loot" stream, so changing loot rolls cannot
@@ -573,11 +583,11 @@ export function buildLevel(depth: number, opts: BuildOpts): Level {
     loot.push({ item: scriptSpec(effect), x: spot.x, y: spot.y });
   }
 
-  // spawn extra guns (later guns are ammo pickups)
-  for (let i = 1; i < gunsForDepth(depth); i++) {
+  // spawn extra shell piles on deeper levels
+  for (let i = 1; i < shellPilesForDepth(depth); i++) {
     const spot = randomFloor(lootRng, walls, placed, null, 0, width, height);
     placed.push(spot);
-    loot.push({ item: shotgunSpec(), x: spot.x, y: spot.y });
+    loot.push({ item: shellSpec(), x: spot.x, y: spot.y });
   }
 
   // The walrus operator: rare, two cells, from its introduction depth.
