@@ -5,7 +5,7 @@
  * screen implementation turns these styles into SGR; every game layer can
  * share them without import cycles.
  */
-import type { CellStyle } from "./style.ts";
+import type { CellStyle, Color } from "./style.ts";
 
 /** Map dimensions in cells: the playfield, not the whole terminal. */
 export const WIDTH = 80;
@@ -77,6 +77,29 @@ export const STYLE_RED: CellStyle = { fg: "red" };
 export const STYLE_REVERSE: CellStyle = { reverse: true };
 /** Vim-style gutter numbers and tildes. */
 export const STYLE_GUTTER: CellStyle = { fg: "brightBlack" };
+
+/** Player health bar endpoints, Brogue style: blue at full, red at empty. */
+const HEALTH_BAR_FULL = "#5b8cff";
+const HEALTH_BAR_EMPTY = "#da3228";
+
+/** Blend two hex colors, moving `weight` of the way toward `to`. */
+function mixHex(from: `#${string}`, to: `#${string}`, weight: number): Color {
+  const rgb = (hex: `#${string}`): number[] =>
+    [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+  const a = rgb(from);
+  const b = rgb(to);
+  const out = a.map((v, i) => Math.round(v + (b[i]! - v) * weight));
+  return `#${out.map((v) => v.toString(16).padStart(2, "0")).join("")}`;
+}
+
+/**
+ * Player health bar tint: Brogue's red-to-blue average. Full health is blue,
+ * empty is red, and every point between is a blend.
+ */
+export function playerHealthBarStyle(hp: number, maxHp: number): CellStyle {
+  const pct = maxHp <= 0 ? 0 : Math.min(1, Math.max(0, hp / maxHp));
+  return { fg: mixHex(HEALTH_BAR_EMPTY, HEALTH_BAR_FULL, pct), reverse: true };
+}
 
 /**
  * Heat gradation by Python-version index: 2.x cool green, 3.x yellow to

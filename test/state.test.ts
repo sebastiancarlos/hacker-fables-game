@@ -1399,6 +1399,27 @@ describe("status bar", () => {
     assert.ok(plain(row).includes("HP:8(16)"));
     assert.equal(plain(row).length, WIDTH);
   });
+
+  it("tints the bar from blue at full health to red when low", () => {
+    const tint = (hp: number): string | undefined => {
+      const screen = new VirtualScreen();
+      paintStatus(makeState({ hp }), screen);
+      return screen.spansAt(STATUS_ROW)?.find((span) => span.reverse === true)
+        ?.fg;
+    };
+    const full = tint(MAX_HP);
+    const half = tint(Math.floor(MAX_HP / 2));
+    const low = tint(1);
+    assert.ok(full);
+    assert.ok(half);
+    assert.ok(low);
+    assert.notEqual(full, half);
+    assert.notEqual(half, low);
+    const red = (hex: string): number => parseInt(hex.slice(1, 3), 16);
+    const blue = (hex: string): number => parseInt(hex.slice(5, 7), 16);
+    assert.ok(blue(full) > red(full), "full health is blue");
+    assert.ok(red(low) > blue(low), "low health is red");
+  });
 });
 
 describe("command tally", () => {

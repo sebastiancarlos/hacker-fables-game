@@ -57,6 +57,7 @@ import {
   STYLE_VISUAL_CORNER,
   SCREEN_ROWS,
   STATUS_ROW,
+  playerHealthBarStyle,
 } from "./theme.ts";
 import {
   type Cell,
@@ -232,7 +233,10 @@ export function paintStatus(S: GameState, screen: Screen): void {
   );
   const line: Span[] = [{ text: "[" }];
   if (fill > 0) {
-    line.push({ text: name.slice(0, fill), reverse: true });
+    line.push({
+      text: name.slice(0, fill),
+      ...playerHealthBarStyle(S.sim.hp, MAX_HP),
+    });
   }
   line.push({ text: `${name.slice(fill)}]` });
   line.push({
